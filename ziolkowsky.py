@@ -7,7 +7,7 @@ Created on Thu Oct 20 10:25:30 2022
 
 import math
 import numpy as np
-
+import os.path
 def f_reverse(n, m, m_pl, isp, **kwargs):
     """
     WORK IN PROGRESS NOT VALIDATED
@@ -57,7 +57,7 @@ def f_reverse(n, m, m_pl, isp, **kwargs):
         for i in range(0,n):
             _m_f.append(_m_s[i] * 0.88)
     _m_s.append(m_pl)
-    
+
     delta_v = 0
     for i in range(0,n):
         delta_v = delta_v + _isp[i]*9.81*math.log(sum(_m_s, i)/(sum(_m_s, i) - _m_f[i]), math.e)
@@ -349,7 +349,7 @@ def TwoDAlt_SSTO(Mode, FixVal, size_X_Axis, X_Axis_LL, x_Axis_UL, m_pl, delv, li
         isp = FixVal
         mu = np.linspace(x_Axis_UL, X_Axis_LL, size_X_Axis)
         Y = np.zeros((size_X_Axis, 2))
-        fName = "SSTO_ISP=" + str(round(isp, 2)) + ".csv"
+        fName = os.path.join(os.path.dirname(__file__), "data",  "SSTO_ISP=" + str(round(isp, 2))+ ".csv")
         for k in range(0, size_X_Axis):
             Y[k, 0] = f(mu[k], isp, m_pl, delv, limit)
             Y[k, 1] = mu[k]
@@ -360,7 +360,7 @@ def TwoDAlt_SSTO(Mode, FixVal, size_X_Axis, X_Axis_LL, x_Axis_UL, m_pl, delv, li
         isp = np.linspace(X_Axis_LL, x_Axis_UL, size_X_Axis)
         mu = FixVal
         Y = np.zeros((size_X_Axis,2))
-        fName = "SSTO_Mu=" + str(round(mu, 5)) + ".csv"
+        fName = os.path.join(os.path.dirname(__file__), "data", "SSTO_Mu=" + str(round(mu, 5))+ ".csv")
         for k in range(0, size_X_Axis):
             Y[k] = f(mu, isp[k], m_pl, delv, limit)
             Y[k, 1] = isp[k]
@@ -393,7 +393,7 @@ def TwoDAlt_2Stage(Mode, FixVal, size_X_Axis, X_Axis_LL, x_Axis_UL, m_pl, delv, 
             isp2 = isp
         mu = np.linspace(x_Axis_UL, X_Axis_LL, size_X_Axis)
         Y = np.zeros((size_X_Axis, 2))
-        fName = "2Stage_ISP1=" + str(round(isp, 2)) + ";ISP2=" + str(round(isp2, 2)) + ".csv"
+        fName = os.path.join(os.path.dirname(__file__), "data", "2Stage_ISP1=" + str(round(isp, 2)) + ";ISP2=" + str(round(isp2, 2))+ ".csv")
         for k in range(0, size_X_Axis):
             Y[k, 0] = f_twoStage(mu[k], isp, isp2, m_pl, delv, limit)
             Y[k, 1] = mu[k]
@@ -404,7 +404,7 @@ def TwoDAlt_2Stage(Mode, FixVal, size_X_Axis, X_Axis_LL, x_Axis_UL, m_pl, delv, 
         isp = np.linspace(X_Axis_LL, x_Axis_UL, size_X_Axis)
         mu = FixVal
         Y = np.zeros((size_X_Axis,2))
-        fName = "2Stage_Mu=" + str(round(mu, 5)) + ".csv"
+        fName = os.path.join(os.path.dirname(__file__), "data", "2Stage_Mu=" + str(round(mu, 5))+ ".csv")
         for k in range(0, size_X_Axis):
             Y[k] = f_twoStage(mu, isp[k], 1e6, isp[k])
             Y[k, 1] = isp[k]
@@ -440,7 +440,7 @@ def TwoDAlt_3Stage(Mode, FixVal, size_X_Axis, X_Axis_LL, x_Axis_UL, m_pl, delv, 
             isp3 = isp2
         mu = np.linspace(x_Axis_UL, X_Axis_LL, size_X_Axis)
         Y = np.zeros((size_X_Axis, 2))
-        fName = "3Stage_ISP1=" + str(round(isp, 2)) + ";ISP2=" + str(round(isp2, 2)) + ";ISP3=" + str(round(isp3, 2)) + ".csv"
+        fName = os.path.join(os.path.dirname(__file__), "data", "3 Stage_ISP1=" + str(round(isp, 2)) + ";ISP2=" + str(round(isp2, 2)) + ";ISP3=" + str(round(isp3, 2)) + ".csv")
         for k in range(0, size_X_Axis):
             Y[k, 0] = f_threeStage(mu[k], isp, isp2, isp3, m_pl, delv, limit, )
             Y[k, 1] = mu[k]
@@ -451,7 +451,7 @@ def TwoDAlt_3Stage(Mode, FixVal, size_X_Axis, X_Axis_LL, x_Axis_UL, m_pl, delv, 
         isp = np.linspace(X_Axis_LL, x_Axis_UL, size_X_Axis)
         mu = FixVal
         Y = np.zeros((size_X_Axis,2))
-        fName = "3Stage_Mu=" + str(round(mu, 5)) + ".csv"
+        fName = os.path.join(os.path.dirname(__file__), "data", "3Stage_Mu=" + str(round(mu, 5))+ ".csv")
         for k in range(0, size_X_Axis):
             Y[k] = f_twoStage(mu, isp[k], 1e6, isp[k], isp[k])
             Y[k, 1] = isp[k]
@@ -475,7 +475,7 @@ def Optimised2Stage(Isp1, Isp2, size_X_Axis, X_Axis_LL, x_Axis_UL, m_pl, delv, l
 
     mu = np.linspace(x_Axis_UL, X_Axis_LL, size_X_Axis)
     Y = np.zeros((size_X_Axis, 3))
-    fName = "2-Stage Opt.;ISP1=" + str(Isp1) + "s;ISP2=" +str(Isp2) +"s.csv" 
+    fName = os.path.join(os.path.dirname(__file__), "data", "2-Stage Opt.;ISP1=" + str(Isp1) + "s;ISP2=" +str(Isp2) +"s"+ ".csv") 
     for k in range(0, size_X_Axis):
         m_0 = 1e-3
         m_0_ = f_twoStage(mu[k], Isp1, Isp2, m_pl, delv, limit)
