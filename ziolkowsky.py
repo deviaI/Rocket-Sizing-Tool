@@ -8,7 +8,60 @@ Created on Thu Oct 20 10:25:30 2022
 import math
 import numpy as np
 
+def f_reverse(n, m, m_pl, isp, **kwargs):
+    """
+    WORK IN PROGRESS NOT VALIDATED
 
+    Method to return achievable delta v for a given Rocket Configuartion
+
+    Inputs:
+    n: Number of Stages
+    m: Either Launch Mass of Rocket /wo Payload OR List of Stage Masses /wo Payload (such that the sum of the Stage Masses is the Launch Mass /wo Paylaod)
+       If only Launch Mass is given, it is assumed that each stages mass is equal to half the previous Stages Mass
+    m_pl: Mass of Payload
+    isp: Engine Isp or List of Engine Isps
+         If Only one Isp value is provided, it is assumed that Isp is identical for all stages
+    
+    Optional Input:
+    m_f: List of propellant mass per stage
+         If Not given, a strucure factor of 12% is assumed for each stage
+    
+    Returns:
+        Achievable Delta V
+    """
+    _isp = []
+    _m_s = []
+    _m_f = []
+    try:
+        for i in range(0,n):
+            _isp.append(isp[i])
+    except TypeError:
+        for i in range(0,n):
+            _isp.append(isp)
+    try:
+        for i in range(0,n):
+            _m_s.append(m[i])
+    except TypeError:
+        fac = 0
+        for i in range(0,n):
+            fac = fac + math.pow(0.5, i)
+        _m_s.append((m)/fac)
+        for i in range(1,n):
+            _m_s.append(_m_s[i-1]*0.5)
+    if "m_f" in kwargs:
+        if type(kwargs["m_f"]) != list:
+            raise TypeError("m_f must be list")
+        for i in range(0,n):
+            _m_f = kwargs["m_f"][i]
+    else:
+        for i in range(0,n):
+            _m_f.append(_m_s[i] * 0.88)
+    _m_s.append(m_pl)
+    
+    delta_v = 0
+    for i in range(0,n):
+        delta_v = delta_v + _isp[i]*9.81*math.log(sum(_m_s, i)/(sum(_m_s, i) - _m_f[i]), math.e)
+    return delta_v
 
 def f( mu, isp, m_pl, delv, limit):
     """
