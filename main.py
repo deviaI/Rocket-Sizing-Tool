@@ -7,7 +7,7 @@ def main():
     print(results)
     # Generates a bunch of default comparative .csv files For a 250kg Payload and Delta V Target of 9 km/s:
     z.TwoDAlt(1, "Isp", 280, 100, 0.01, 0.15, 250, 9000, 1e6)                             #SSTO with 280s Isp Engine
-    z.TwoDAlt(1, "Isp", 311, 100, 0.01, 0.15, 250, 9000, 1e6)                             #SSTO with 280s Isp Engine
+    z.TwoDAlt(1, "Isp", 311, 100, 0.01, 0.15, 250, 9000, 1e6)                             #SSTO with 311s Isp Engine
     z.TwoDAlt(2, "Isp", 280, 100, 0.01, 0.15, 250, 9000, 1e6)                             #2 Stage Rocket with 280s Isp Engines
     z.TwoDAlt(2, "Isp", 280, 100, 0.01, 0.15, 250, 9000, 1e6, isp_2 = 320)                #2 Stage Rocket with 280s Isp First Stage Engine, 320s Second Stage Engine
     z.TwoDAlt(2, "Isp", 311, 100, 0.01, 0.15, 250, 9000, 1e6, isp_2 = 343)                #2 Stage Rocket with 311s Isp First Stage Engine, 343s Second Stage Engine [Rocket Lab Electron Engines]
