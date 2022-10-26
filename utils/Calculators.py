@@ -9,10 +9,17 @@ import math
 import numpy as np
 import os.path
 
+
 class Calculator(object):
 
-    def __init__(self, basedir):
-        self.base = basedir
+    def __init__(self, m_pl, delta_v):
+        self.data = {}
+        self.data["m_pl"] = m_pl
+        self.data["delta v"] = delta_v
+
+
+    def Tsiolkowsky(self, isp, m0, mf):
+        return isp*9.81*math.log(m0/mf, math.e)
 
     def f_reverse(self, n, m, m_pl, isp, **kwargs):
         """
@@ -66,7 +73,7 @@ class Calculator(object):
 
         delta_v = 0
         for i in range(0,n):
-            delta_v = delta_v + _isp[i]*9.81*math.log(sum(_m_s, i)/(sum(_m_s, i) - _m_f[i]), math.e)
+            delta_v += self.Tsiolkowsky(_isp[i], sum(_m_s, i), sum(_m_s, i) - _m_f[i])
         return delta_v
 
     def f(self, mu, isp, m_pl, delv, limit):
@@ -127,8 +134,6 @@ class Calculator(object):
             1e99 (if diverged)
         """
         m_0 = 2*m_pl
-        v_star_1 = isp_1*9.81
-        v_star_2 = isp_2*9.81
         if "size_fac" in kwargs:
             size_fac = kwargs["size_fac"]
         else:
@@ -145,8 +150,8 @@ class Calculator(object):
             if not(sanity_check):
                 print("sanity check failed")
                 return -1
-            delv_1 = v_star_1 * math.log(m_01/m_f1, math.e)
-            delv_2 = v_star_2 * math.log(m_02/m_f2, math.e)
+            delv_1 = self.Tsiolkowsky(isp_1, m_01, m_f1)
+            delv_2 = self.Tsiolkowsky(isp_2, m_02, m_f2)
             delv_tot = delv_2 + delv_1
             m_0_ = (1+(delv-delv_tot)/delv) * m_0
             if "debug" in kwargs:
@@ -193,9 +198,6 @@ class Calculator(object):
             1e99 (if diverged)
         """
         m_0 = 2*m_pl
-        v_star_1 = isp_1*9.81
-        v_star_2 = isp_2*9.81
-        v_star_3 = isp_3*9.81
         while True:
             m_s1 = 4/7 * (m_0 - m_pl)
             m_s2 = 1/2 * m_s1
@@ -206,9 +208,9 @@ class Calculator(object):
             m_f1 = m_0 * mu + m_02
             m_f2 = m_02 * mu + m_03
             m_f3 = m_03 * mu + m_pl
-            delv_1 = v_star_1 * math.log(m_01/m_f1, math.e)
-            delv_2 = v_star_2 * math.log(m_02/m_f2, math.e)
-            delv_3 = v_star_3 * math.log(m_03/m_f3, math.e)
+            delv_1 = self.Tsiolkowsky(isp_1, m_01, m_f1)
+            delv_2 = self.Tsiolkowsky(isp_2, m_02, m_f2)
+            delv_3 = self.Tsiolkowsky(isp_3, m_03, m_f3)
             delv_tot = delv_2 + delv_1 + delv_3
             sanity_check = ((m_s1 + m_s2 +m_s3 >= (m_0 - m_pl)*0.995) or ((m_s1 + m_s2 +m_s3 <= (m_0 - m_pl)*1.005)) ) and (m_f3 > m_pl)
             if not(sanity_check):
@@ -263,8 +265,6 @@ class Calculator(object):
         """
         delv_tot_max = 0
         size_fac_max = 0
-        v_star_1 = isp1*9.81
-        v_star_2 = isp2*9.81
         size_fac = np.linspace(0.01, 0.99, 99)
         for i in range(0,99):
             m_s1 = (m_0 - m_pl)/(1+size_fac[i])
@@ -277,8 +277,8 @@ class Calculator(object):
             if not(sanity_check):
                 print("sanity check failed")
                 return -1
-            delv_1 = v_star_1 * math.log(m_01/m_f1, math.e)
-            delv_2 = v_star_2 * math.log(m_02/m_f2, math.e)
+            delv_1 = self.Tsiolkowsky(isp1, m_01, m_f1)
+            delv_2 = self.Tsiolkowsky(isp2, m_02, m_f2)
             delv_tot = delv_2 + delv_1
             if "debug" in kwargs:
                 print("Total delta v:" +str(delv_tot))
@@ -318,13 +318,13 @@ class Calculator(object):
             None 
         """
         if Stages == 1:
-            self.TwoDAlt_SSTO(Mode, FixVal, size_X_Axis, X_Axis_LL, x_Axis_UL, m_pl, delv, limit)
+            return self.TwoDAlt_SSTO(Mode, FixVal, size_X_Axis, X_Axis_LL, x_Axis_UL, m_pl, delv, limit)
         elif Stages == 2:
             if "isp_2" in kwargs:
                 isp2 = kwargs["isp_2"]
             else:
                 isp2 = FixVal 
-            self.TwoDAlt_2Stage(Mode, FixVal, size_X_Axis, X_Axis_LL, x_Axis_UL, m_pl, delv, limit,isp_2 = isp2)
+            return self.TwoDAlt_2Stage(Mode, FixVal, size_X_Axis, X_Axis_LL, x_Axis_UL, m_pl, delv, limit,isp_2 = isp2)
         else:
             if "isp_2" in kwargs:
                 isp2 = kwargs["isp_2"]
@@ -334,7 +334,7 @@ class Calculator(object):
                 isp3 = kwargs["isp_3"]
             else:
                 isp3 = isp2
-            self.TwoDAlt_3Stage(Mode, FixVal, size_X_Axis, X_Axis_LL, x_Axis_UL, m_pl, delv, limit, isp_2 = isp2, isp_3 = isp3)
+            return self.TwoDAlt_3Stage(Mode, FixVal, size_X_Axis, X_Axis_LL, x_Axis_UL, m_pl, delv, limit, isp_2 = isp2, isp_3 = isp3)
                 
     def TwoDAlt_SSTO(self, Mode, FixVal, size_X_Axis, X_Axis_LL, x_Axis_UL, m_pl, delv, limit):
         """
@@ -355,24 +355,20 @@ class Calculator(object):
             isp = FixVal
             mu = np.linspace(x_Axis_UL, X_Axis_LL, size_X_Axis)
             Y = np.zeros((size_X_Axis, 2))
-            fName = os.path.join(self.base, "data",  "SSTO_ISP=" + str(round(isp, 2))+ ".csv")
+
             for k in range(0, size_X_Axis):
                 Y[k, 0] = self.f(mu[k], isp, m_pl, delv, limit)
                 Y[k, 1] = mu[k]
-            np.savetxt(fName, Y, delimiter=",")
-            with open(fName,'a') as fd:
-                fd.write("ISP = " + str(isp) + " Configuration: SSTO")
         else:
             isp = np.linspace(X_Axis_LL, x_Axis_UL, size_X_Axis)
             mu = FixVal
             Y = np.zeros((size_X_Axis,2))
-            fName = os.path.join(self.base, "data", "SSTO_Mu=" + str(round(mu, 5))+ ".csv")
+    
             for k in range(0, size_X_Axis):
                 Y[k] = self.f(mu, isp[k], m_pl, delv, limit)
                 Y[k, 1] = isp[k]
-            np.savetxt(fName, Y, delimiter=",")
-            with open(fName,'a') as fd:
-                fd.write("Mu = " + str(mu) + " Configuration: SSTO")
+        return Y
+
 
             
     def TwoDAlt_2Stage(self, Mode, FixVal, size_X_Axis, X_Axis_LL, x_Axis_UL, m_pl, delv, limit, **kwargs):
@@ -399,24 +395,17 @@ class Calculator(object):
                 isp2 = isp
             mu = np.linspace(x_Axis_UL, X_Axis_LL, size_X_Axis)
             Y = np.zeros((size_X_Axis, 2))
-            fName = os.path.join(self.base, "data", "2Stage_ISP1=" + str(round(isp, 2)) + ";ISP2=" + str(round(isp2, 2))+ ".csv")
             for k in range(0, size_X_Axis):
                 Y[k, 0] = self.f_twoStage(mu[k], isp, isp2, m_pl, delv, limit)
                 Y[k, 1] = mu[k]
-            np.savetxt(fName, Y, delimiter=",")
-            with open(fName,'a') as fd:
-                fd.write("Configuration: 2-Stage, mass Stage 1 = 2 x mass Stage 2" + " Isp Stage 1:" + str(isp) + "s Isp Stage 2: " + str(isp2) + "s")
         else:
             isp = np.linspace(X_Axis_LL, x_Axis_UL, size_X_Axis)
             mu = FixVal
             Y = np.zeros((size_X_Axis,2))
-            fName = os.path.join(self.base, "data", "2Stage_Mu=" + str(round(mu, 5))+ ".csv")
             for k in range(0, size_X_Axis):
                 Y[k] = self.f_twoStage(mu, isp[k], 1e6, isp[k])
                 Y[k, 1] = isp[k]
-            np.savetxt(fName, Y, delimiter=",")
-            with open(fName,'a') as fd:
-                fd.write(" Configuration: 2-Stage, mass Stage 1 = 2 x mass Stage 2, Mu = " + str(mu) )
+        return Y
 
     def TwoDAlt_3Stage(self, Mode, FixVal, size_X_Axis, X_Axis_LL, x_Axis_UL, m_pl, delv, limit, **kwargs):
         """
@@ -446,24 +435,17 @@ class Calculator(object):
                 isp3 = isp2
             mu = np.linspace(x_Axis_UL, X_Axis_LL, size_X_Axis)
             Y = np.zeros((size_X_Axis, 2))
-            fName = os.path.join(self.base, "data", "3 Stage_ISP1=" + str(round(isp, 2)) + ";ISP2=" + str(round(isp2, 2)) + ";ISP3=" + str(round(isp3, 2)) + ".csv")
             for k in range(0, size_X_Axis):
                 Y[k, 0] = self.f_threeStage(mu[k], isp, isp2, isp3, m_pl, delv, limit, )
                 Y[k, 1] = mu[k]
-            np.savetxt(fName, Y, delimiter=",")
-            with open(fName,'a') as fd:
-                fd.write("Configuration: 3-Stage, mass Stage 1 = 2 x mass Stage 2 = 2 x mass Stage 3" + " Isp Stage 1:" + str(isp) + "s Isp Stage 2: " + str(isp2) + "s Isp Stage 3: " + str(isp3) + "s")
         else:
             isp = np.linspace(X_Axis_LL, x_Axis_UL, size_X_Axis)
             mu = FixVal
             Y = np.zeros((size_X_Axis,2))
-            fName = os.path.join(self.base, "data", "3Stage_Mu=" + str(round(mu, 5))+ ".csv")
             for k in range(0, size_X_Axis):
                 Y[k] = self.f_twoStage(mu, isp[k], 1e6, isp[k], isp[k])
                 Y[k, 1] = isp[k]
-            np.savetxt(fName, Y, delimiter=",")
-            with open(fName,'a') as fd:
-                fd.write(" Configuration: 3-Stage, mass Stage 1 = 2 x mass Stage 2 = 2 x mass Stage 3, Mu = " + str(mu) )
+        return Y
 
     def Optimised2Stage(self, Isp1, Isp2, size_X_Axis, X_Axis_LL, x_Axis_UL, m_pl, delv, limit):
         """
@@ -481,7 +463,6 @@ class Calculator(object):
 
         mu = np.linspace(x_Axis_UL, X_Axis_LL, size_X_Axis)
         Y = np.zeros((size_X_Axis, 3))
-        fName = os.path.join(self.base, "data", "2-Stage Opt.;ISP1=" + str(Isp1) + "s;ISP2=" +str(Isp2) +"s"+ ".csv") 
         for k in range(0, size_X_Axis):
             m_0 = 1e-3
             m_0_ = self.f_twoStage(mu[k], Isp1, Isp2, m_pl, delv, limit)
@@ -492,7 +473,5 @@ class Calculator(object):
             Y[k,0] = m_0_
             Y[k,1] = mu[k]
             Y[k,2] = results["Optimal Stage Sizing Factor"]
-        np.savetxt(fName, Y, delimiter=",")
-        with open(fName,'a') as fd:
-            fd.write(" Configuration: 2-Stage optimised , Relative Stage Sizing = third column, Isp1=" + str(Isp1) + ";Isp2=" + str(Isp2))
+        return Y
         

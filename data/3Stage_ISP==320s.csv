@@ -98,4 +98,4 @@
 7.501779392118574030e+00,1.282828282828285538e-02
 7.395957328709788392e+00,1.141414141414143213e-02
 7.292439307953514138e+00,1.000000000000000021e-02
-Configuration: 3-Stage, mass Stage 1 = 2 x mass Stage 2 = 2 x mass Stage 3 Isp Stage 1:280s Isp Stage 2: 280s Isp Stage 3: 280s
+Configuration: 3-Stage, mass Stage 1 = 2 x mass Stage 2; Isp Stage 1=Isp Stage 2=Isp Stage 3=320s
