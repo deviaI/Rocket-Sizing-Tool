@@ -1,8 +1,12 @@
-import ziolkowsky as z
+from utils.Calculators import Calculator
+import os.path
 
 def main():
 
 
+    base = os.path.dirname(__file__)
+    print(base)
+    z = Calculator(base)
     results = z.f_reverse(2, 12500, 250, [311, 343]) #Calculate achievable delta v with a 12.5 ton, 2 stage Rocket with Isps of 311s and 343s and default structure factor of 12% for a 250kg payload
     print(results)
     # Generates a bunch of default comparative .csv files For a 250kg Payload and Delta V Target of 9 km/s:
