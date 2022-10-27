@@ -6,8 +6,11 @@ def main():
 
 
     base = os.path.dirname(__file__)
-    print(base)
     z = Calculator(250, 9000)
+
+    print(z.calcSinglePoint(2, [311, 343], 250))
+
+
     Exp = Exporter(os.path.join(base, "data"))
     results = z.f_reverse(2, 12500, 250, [311, 343]) #Calculate achievable delta v with a 12.5 ton, 2 stage Rocket with Isps of 311s and 343s and default structure factor of 12% for a 250kg payload
     print(results)

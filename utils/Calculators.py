@@ -58,7 +58,7 @@ class Calculator(object):
             fac = 0
             for i in range(0,n):
                 fac = fac + math.pow(0.5, i)
-            _m_s.append((m)/fac)
+            _m_s.append((m-m_pl)/fac)
             for i in range(1,n):
                 _m_s.append(_m_s[i-1]*0.5)
         if "m_f" in kwargs:
@@ -110,6 +110,127 @@ class Calculator(object):
                 break
             m_0 = m_01
         return m_01/1000
+
+    def calcSinglePoint(self, n, isp, m_pl, mu = 0.12, delv = 9000, limit = 1e6, **kwargs):
+        """
+        Method for returning the theoretical launch mass of a Rocket based on:
+        Engine Isp,  Structure Factor, Payload Mass and target Delta V
+
+        Inputs:
+            n:   Number of Stages
+            Isp: Isp of all Engines
+                 OR
+                 List of Isps for each Engine
+            m_pl: Payload Mass in kg
+            mu: Structure Factor // Default = 0.12
+            delv: Target Delta V // Default = 90000 m/s
+            limit: Upper mass limit for divergence cut off // Default = 1e6
+
+        Optional Inputs:
+            size_fac: Relative Mass of second stage compared to first stage 
+                      If not given, it is calculated to be optimal
+
+        Returns:
+            Launch Mass of Rocket in kg(if converged)
+            OR
+            1e99 (if diverged)
+
+            Relative Stage Mass Factor
+        """
+
+        m_0 = 2*m_pl
+        if "size_fac" in kwargs:
+            size_fac = kwargs["size_fac"]
+        else:
+            size_fac = 0.5
+        #for i in range(0,20):
+        while True:   
+            delv_tot = 0
+            m_s = []
+            m_f = []
+            fac = 0
+            for k in range(0,n):
+                fac = fac + math.pow(size_fac, k)
+            m_s.append((m_0-m_pl)/fac)
+            for k in range(1,n):
+                m_s.append(m_s[k-1]*size_fac)
+            m_s.append(m_pl)
+            for k in range(0,n):
+                m_f.append(m_s[k] * (1-mu))
+            sanity_check = sum(m_s) < m_0*1.01 and sum(m_s) > m_0*0.99
+            if not(sanity_check):
+                print("sanity check failed")
+                return -1
+            for k in range(0,n):
+                if type(isp) == list:
+                    delv_tot += self.Tsiolkowsky(isp[k], sum(m_s[k:n+1]), sum(m_s[k:n+1]) - m_f[k])
+                else:
+                    delv_tot += self.Tsiolkowsky(isp, sum(m_s[k:n+1]), sum(m_s[k:n+1]) - m_f[k])
+            m_0_ = (1+(delv-delv_tot)/delv) * m_0
+            size_fac = self.optimiseMassRatio(n, m_0_, isp, m_pl, mu)["Optimal Stage Sizing Factor"]
+            if abs((m_0_-m_0)/m_0) < 0.0001:
+                break
+            if m_0_ > limit:
+                m_0_ = 1e99
+                break
+            m_0 = m_0_
+        m_0 = m_0_
+        return m_0, size_fac
+
+    
+    def calcRange():
+        placeHolder = 0
+        return placeHolder
+
+    def optimiseMassRatio(self, n, m_0, isp, m_pl, mu = 0.12):
+        """
+        Method for finding the optimal mass ratio between first and second stage for 
+        a given Launch Mass and Stage Isps
+    Inputs:
+            n:  Number of Stages
+            mu: Structure Factor//Default = 12%
+            isp1: Isp of all Engines 
+                  OR 
+                  List of Isps for each Engine
+            m_pl: Payload Mass in kg
+    Returns:
+            Dictionary with entries:
+                "Achieved Delta V": Delta V at optimal relative stage mass
+                "Optimal Stage Sizing Factor": Optimal mass of second stage as a factor of first stage mass
+        """
+        delv_tot_max = 0
+        size_fac_max = 0
+        for i in range(1,99):
+            delv_tot = 0
+            m_s = []
+            m_f = []
+            fac = 0
+            for k in range(0,n):
+                fac = fac + math.pow(i*1e-2, k)
+            m_s.append((m_0-m_pl)/fac)
+            for k in range(1,n):
+                m_s.append(m_s[k-1]*i*1e-2)
+            m_s.append(m_pl)
+            for k in range(0,n):
+                m_f.append(m_s[k] * (1-mu))
+            sanity_check = sum(m_s) < m_0*1.01 and sum(m_s) > m_0*0.99
+            if not(sanity_check):
+                print("sanity check failed")
+                print(m_s)
+                print(i)
+                return -1
+            for k in range(0,n):
+                if type(isp) == list:
+                    delv_tot += self.Tsiolkowsky(isp[k], sum(m_s[k:n+1]), sum(m_s[k:n+1]) - m_f[k])
+                else:
+                    delv_tot += self.Tsiolkowsky(isp, sum(m_s[k:n+1]), sum(m_s[k:n+1]) - m_f[k])
+            if delv_tot > delv_tot_max:
+                delv_tot_max = delv_tot
+                size_fac_max = i*1e-2
+        results = {}
+        results["Achieved Delta V"] = delv_tot_max
+        results["Optimal Stage Sizing Factor"] = size_fac_max
+        return results
 
     def f_twoStage(self, mu, isp_1, isp_2, m_pl, delv, limit, **kwargs):
         """
@@ -179,6 +300,7 @@ class Calculator(object):
         m_0 = m_0_
         return m_0/1000
 
+
     def f_threeStage(self, mu, isp_1, isp_2, isp_3, m_pl, delv, limit, **kwargs):
         """
         Method for returning the launch mass of an SSTO based on:
@@ -245,60 +367,6 @@ class Calculator(object):
         m_0 = m_0_
         return m_0/1000
 
-    def optimise_2Stage(self, m_0, isp1, isp2, mu, m_pl, **kwargs):
-        """
-        Method for finding the optimal mass ratio between first and second stage for 
-        a given Launch Mass and Stage Isps
-    Inputs:
-            mu: Structure Factor 
-            isp_1: First stage engine Isp in Seconds
-            isp_2: Second stage engine Isp in Seconds
-            m_pl: Payload Mass in kg
-            delv: Target Delta V
-            limit: Upper mass limit for divergence cut off
-        Optional Inputs:
-            debug: debug Flag // Default: Off
-        Returns:
-            Dictionary with entries:
-                "Achieved Delta V": Delta V at optimal relative stage mass
-                "Optimal Stage Sizing Factor": Optimal mass of second stage as a factor of first stage mass
-        """
-        delv_tot_max = 0
-        size_fac_max = 0
-        size_fac = np.linspace(0.01, 0.99, 99)
-        for i in range(0,99):
-            m_s1 = (m_0 - m_pl)/(1+size_fac[i])
-            m_s2 = size_fac[i] * m_s1
-            m_01 = m_0
-            m_02 = m_s2 + m_pl
-            m_f1 = m_01 * mu + m_02
-            m_f2 = m_02 * mu + m_pl
-            sanity_check = ((m_s1 + m_s2 >= (m_0 - m_pl)*0.995) or ((m_s1 + m_s2 <= (m_0 - m_pl)*1.005)) ) and (m_f2 > m_pl)
-            if not(sanity_check):
-                print("sanity check failed")
-                return -1
-            delv_1 = self.Tsiolkowsky(isp1, m_01, m_f1)
-            delv_2 = self.Tsiolkowsky(isp2, m_02, m_f2)
-            delv_tot = delv_2 + delv_1
-            if "debug" in kwargs:
-                print("Total delta v:" +str(delv_tot))
-                print("m_0:" +str(m_0))
-                print("m_s1:" +str(m_s1))
-                print("m_s2:" +str(m_s2))
-                print("m_01:" +str(m_01))
-                print("m_02:" +str(m_02))
-                print("m_f1:" +str(m_f1))
-                print("m_f2:" +str(m_f2))
-                print("//")
-            if delv_tot > delv_tot_max:
-                delv_tot_max = delv_tot
-                size_fac_max = size_fac[i]
-        results = {}
-        results["Achieved Delta V"] = delv_tot_max
-        results["Optimal Stage Sizing Factor"] = size_fac_max
-        return results
-
-                
     def TwoDAlt(self, Stages, Mode, FixVal, size_X_Axis, X_Axis_LL, x_Axis_UL, m_pl, delv, limit, **kwargs):
         """
         Parent Method for generating a 2D Plotable csv Data set of Launch Mass against Isp or Launch Mass against Structure Factor
