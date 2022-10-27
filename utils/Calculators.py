@@ -11,16 +11,36 @@ import numpy as np
 
 class Calculator(object):
 
-    def __init__(self, m_pl, delta_v):
-        self.data = {}
-        self.data["m_pl"] = m_pl
-        self.data["delta v"] = delta_v
-
 
     def Tsiolkowsky(self, isp, m0, mf):
+        """
+        Tsiolkowsky Equation
+
+        Inputs:
+            Isp: Isp
+            m0: Mass at start of burn
+            mf: Mass at end of burn
+
+        Returns:
+            delta v
+        """
         return isp*9.81*math.log(m0/mf, math.e)
 
     def MassSplit(self, n, m_0, m_pl, mu, size_fac):
+        """
+        Computes list of fuel masses and total masses for each individual stage
+
+        Inputs:
+            n: number of stages
+            m_0: total launch mass
+            m_pl: payload mass
+            mu: Structural Factor
+            mu: relative stage to stage mass
+        
+        Returns:
+            list of stage masses (including payload as final stage)
+            list of fuel masses (one element less than stage masses)
+        """
         m_s = []
         m_f = []
         fac = 0
@@ -44,15 +64,18 @@ class Calculator(object):
 
         Inputs:
         n: Number of Stages
-        m: Either Launch Mass of Rocket /wo Payload OR List of Stage Masses /wo Payload (such that the sum of the Stage Masses is the Launch Mass /wo Paylaod)
-           If only launch mass is given, an optimal stage to stage mass ratio of 0.5 is assumed
+        m: Total Launch Mass of Rocket 
+           OR
+           List of Stage Masses /wo Payload (such that the sum of the Stage Masses is the Launch Mass /wo Paylaod)
+           ///If only launch mass is given, a stage to stage mass ratio of 0.5 is assumed
         m_pl: Mass of Payload
         isp: Engine Isp or List of Engine Isps
             If Only one Isp value is provided, it is assumed that Isp is identical for all stages
         
         Optional Input:
         m_f: List of propellant mass per stage
-             If Not given, a structure factor of 12% is assumed. WARNING: Specifying propellant masses without specifiyng stage masses may lead to Error or nonsensically small mu values
+             If Not given, a structure factor of 12% is assumed. 
+             ///WARNING: Specifying propellant masses without specifiyng stage masses may lead to Errors or nonsensically small mu values
         
         Returns:
             Achievable Delta V
@@ -76,15 +99,65 @@ class Calculator(object):
                 raise TypeError("m_f must be list")
             for i in range(0,n):
                 if kwargs["m_f"][i] >= _m_s[i]:
-                    raise ArithmeticError("Given Fuel Mass is greater than Calculated Stage Mass. Please Specify list of Stage Masses instead")
-                _m_f = kwargs["m_f"][i]
+                    raise ArithmeticError("Given Fuel Mass is greater than Calculated Stage Mass. Try specifying list of Stage Masses instead")
+                _m_f.append(kwargs["m_f"][i])
         delta_v = 0
         for i in range(0,n):
             delta_v += self.Tsiolkowsky(_isp[i], sum(_m_s[i:n]), sum(_m_s[i:n]) - _m_f[i])
         return delta_v
 
 
-    def calcSinglePoint(self, n, isp, m_pl, mu = 0.12, delv = 9000, limit = 1e6, **kwargs):
+    def calcPoint(self, n, isp, m_pl, mu = 0.12, delv = 9000, limit = 1e6, **kwargs):
+        """
+        Method for returning the theoretical launch mass of a Rocket based on:
+        Engine Isp,  Structure Factor, Payload Mass and target Delta V
+
+        Inputs:
+            n:   Number of Stages
+            Isp: Isp of all Engines
+                 OR
+                 List of Isps for each Engine
+            m_pl: Payload Mass in kg
+            mu: Structure Factor // Default = 0.12
+            delv: Target Delta V // Default = 90000 m/s
+            limit: Upper mass limit for divergence cut off // Default = 1e6
+
+        Optional Inputs:
+            size_fac: relative stage to stage mass
+                      If not given, it is calculated to be optimal
+        Returns:
+            Launch Mass of Rocket in kg(if converged)
+            OR
+            1e99 (if diverged)
+
+            Relative Stage Mass Factor (will be identical to input, if given as input)
+        """
+
+        m_0 = 2*m_pl
+        if "size_fac" in kwargs:
+            size_fac = kwargs["size_fac"]
+        while True:   
+            delv_tot = 0
+            if not("size_fac" in kwargs):
+                size_fac = self.optimiseMassRatio(n, m_0, isp, m_pl, mu)["Optimal Stage Sizing Factor"]
+            m_s, m_f = self.MassSplit(n, m_0, m_pl, mu, size_fac)
+            for k in range(0,n):
+                if type(isp) == list:
+                    delv_tot += self.Tsiolkowsky(isp[k], sum(m_s[k:n+1]), sum(m_s[k:n+1]) - m_f[k])
+                else:
+                    delv_tot += self.Tsiolkowsky(isp, sum(m_s[k:n+1]), sum(m_s[k:n+1]) - m_f[k])
+            m_0_ = (1+(delv-delv_tot)/delv) * m_0
+            if abs((m_0_-m_0)/m_0) < 0.0001:
+                break
+            if m_0_ > limit:
+                m_0_ = 1e99
+                break
+            m_0 = m_0_
+        m_0 = m_0_
+        return m_0, size_fac
+
+    
+    def calcRange(self, n, RangeVariable,  isp, m_pl, mu, delv = 9000, limit = 1e6, numSteps=100, **kwargs):
         """
         Method for returning the theoretical launch mass of a Rocket based on:
         Engine Isp,  Structure Factor, Payload Mass and target Delta V
@@ -104,44 +177,33 @@ class Calculator(object):
                       If not given, it is calculated to be optimal
 
         Returns:
-            Launch Mass of Rocket in kg(if converged)
-            OR
-            1e99 (if diverged)
-
-            Relative Stage Mass Factor
+            np.array with column [0] containing mass and column [1] containing the corresponding Range Variable (either isp or mu)
         """
-
-        m_0 = 2*m_pl
-        if "size_fac" in kwargs:
-            size_fac = kwargs["size_fac"]
-        else:
-            size_fac = 0.5
-        while True:   
-            delv_tot = 0
-            m_s, m_f = self.MassSplit(n, m_0, m_pl, mu, size_fac)
-            for k in range(0,n):
-                if type(isp) == list:
-                    delv_tot += self.Tsiolkowsky(isp[k], sum(m_s[k:n+1]), sum(m_s[k:n+1]) - m_f[k])
+        Y = np.zeros(3, numSteps)
+        if RangeVariable == "isp":
+            if not(type(isp) == list):
+                raise TypeError("RangeVariable must be list")
+            isp = np.linspace(isp[0], isp[-1], numSteps)
+            for i in range(0, numSteps):
+                if "size_fac" in kwargs:
+                    Y[0, i], Y[2, i] = self.calcPoint(n, isp[i], m_pl, mu, delv, limit, kwargs["size_fac"])
                 else:
-                    delv_tot += self.Tsiolkowsky(isp, sum(m_s[k:n+1]), sum(m_s[k:n+1]) - m_f[k])
-            m_0_ = (1+(delv-delv_tot)/delv) * m_0
-            size_fac = self.optimiseMassRatio(n, m_0_, isp, m_pl, mu)["Optimal Stage Sizing Factor"]
-            if abs((m_0_-m_0)/m_0) < 0.0001:
-                break
-            if m_0_ > limit:
-                m_0_ = 1e99
-                break
-            m_0 = m_0_
-        m_0 = m_0_
-        return m_0, size_fac
+                    Y[0, i], Y[2, i] = self.calcPoint(n, isp[i], m_pl, mu, delv, limit)
+                Y[1, i] = isp[i]
+        elif RangeVariable == "mu":
+            if not(type(mu) == list):
+                raise TypeError("RangeVariable must be list")
+            mu = np.linspace(mu[0], mu[-1], numSteps)
+            for i in range(0, numSteps):
+                if "size_fac" in kwargs:
+                    Y[0, i], Y[2, i] = self.calcPoint(n, isp, m_pl, mu[i], delv, limit, kwargs["size_fac"])
+                else:
+                    Y[0, i], Y[2, i] = self.calcPoint(n, isp, m_pl, mu[i], delv, limit)
+                Y[1, i] = mu[i]
+        else:
+            raise Exception("Unknown RangeVariable")
+        return Y
 
-    
-    def calcRange():
-        """
-        #TODO 
-        """
-        placeHolder = 0
-        return placeHolder
 
     def optimiseMassRatio(self, n, m_0, isp, m_pl, mu = 0.12):
         """
