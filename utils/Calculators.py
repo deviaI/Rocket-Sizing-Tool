@@ -179,7 +179,7 @@ class Calculator(object):
         Returns:
             np.array with column [0] containing mass and column [1] containing the corresponding Range Variable (either isp or mu)
         """
-        Y = np.zeros(3, numSteps)
+        Y = np.zeros((3, numSteps))
         if RangeVariable == "isp":
             if not(type(isp) == list):
                 raise TypeError("RangeVariable must be list")
