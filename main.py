@@ -1,14 +1,15 @@
 from utils.Calculators import Calculator
 from utils.Exporter import Exporter
+from utils.Plotters import Plotter
 import os.path
 
 def main():
 
-
     base = os.path.dirname(__file__)
     Calc = Calculator()
     Exp = Exporter(os.path.join(base, "data"))
-    
+    Plt = Plotter(os.path.join(base, "data"))
+
     #Example Calculations
 
     print(Calc.optimiseMassRatio(2, 12500, [311,343], 250, 0.1))
@@ -19,7 +20,10 @@ def main():
     result = Calc.calcPoint(2, [311, 343], 250, 0.1, delv = 9000) #Calculate theoretical launch mass to lift 250kg payload to LEO with a 
                                                                    #2 Stage Rocket with Isp 311 and 343 engines, structural factor of 10%
                                                                    # and optimal stage to stage mass ratio
+    print("Calculating Range")
     results = Calc.calcRange(2, "mu", [311, 343], 250, [0.05, 0.17]) #Calculate theoretical launch mass for Rocket given above across a range of mu from 0.05 to 0.17
+    print("Done!")
+    Plt.plot2D(results[1], results[0], xLab = "Mu", yLab = "Launch Mass")
 
     fName = "Isp1=311;Isp2=343;Mu=0.05:0.17"
     Exp.ExportData(results, fName, "csv")  #Save results in csv file
@@ -29,5 +33,5 @@ def main():
 
 
 if __name__ == '__main__':
-
+    
     main()
