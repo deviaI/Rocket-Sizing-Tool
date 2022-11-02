@@ -6,10 +6,12 @@ def main():
 
 
     base = os.path.dirname(__file__)
-    Calc = Calculator(250, 9000)
+    Calc = Calculator()
     Exp = Exporter(os.path.join(base, "data"))
     
     #Example Calculations
+
+    print(Calc.optimiseMassRatio(2, 12500, [311,343], 250, 0.1))
 
     result = Calc.calcDelV(2, 12500, 250, [311, 343])  #Calculate Delta V of 12.5 ton 2 Stage rocket with Isps of 311 and 343
     print(result)
