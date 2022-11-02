@@ -38,7 +38,7 @@ class Calculator(object):
             mu: relative stage to stage mass
         
         Returns:
-            list of stage masses (including payload as final stage)
+            list of stage masses (including payload as final stage), such that the sum of stage masses is the total launch mass
             list of fuel masses (one element less than stage masses)
         """
         m_s = []
@@ -67,15 +67,15 @@ class Calculator(object):
         m: Total Launch Mass of Rocket 
            OR
            List of Stage Masses /wo Payload (such that the sum of the Stage Masses is the Launch Mass /wo Paylaod)
-           ///If only launch mass is given, a stage to stage mass ratio of 0.5 is assumed
+           ///If only launch mass is given, an optimal stage to stage mass ratio is determined
         m_pl: Mass of Payload
         isp: Engine Isp or List of Engine Isps
             If Only one Isp value is provided, it is assumed that Isp is identical for all stages
         
         Optional Input:
         m_f: List of propellant mass per stage
-             If Not given, a structure factor of 12% is assumed. 
-             ///WARNING: Specifying propellant masses without specifiyng stage masses may lead to Errors or nonsensically small mu values
+            //If Not given, a structure factor of 12% is assumed. 
+            //Can only be specified if m is a list of stage masses
         
         Returns:
             Achievable Delta V
@@ -89,18 +89,22 @@ class Calculator(object):
         except TypeError:
             for i in range(0,n):
                 _isp.append(isp)
-        if type(m) == list:
-            for i in range(0,n):
-                _m_s.append(m[i])
-        else:
-            _m_s, _m_f = self.MassSplit(n, m, m_pl, 0.12, 0.5)
         if "m_f" in kwargs:
             if type(kwargs["m_f"]) != list:
                 raise TypeError("m_f must be list")
+            if type(m) != list:
+                raise TypeError("m must be list if m_f is given")
             for i in range(0,n):
-                if kwargs["m_f"][i] >= _m_s[i]:
-                    raise ArithmeticError("Given Fuel Mass is greater than Calculated Stage Mass. Try specifying list of Stage Masses instead")
-                _m_f.append(kwargs["m_f"][i])
+                _m_s.append(m[i])
+            for i in range(0,n):
+                 _m_f.append(kwargs["m_f"][i])
+        else:
+            if type(m) != list:
+                _m_s, _m_f = self.MassSplit(n, m, m_pl, 0.12, 0.5)
+            else:
+                for i in range(0,n):
+                    _m_s.append(m[i])
+                    _m_f = _m_s[i] * 0.88
         delta_v = 0
         for i in range(0,n):
             delta_v += self.Tsiolkowsky(_isp[i], sum(_m_s[i:n]), sum(_m_s[i:n]) - _m_f[i])
@@ -207,7 +211,7 @@ class Calculator(object):
 
     def optimiseMassRatio(self, n, m_0, isp, m_pl, mu = 0.12):
         """
-        Method for finding the optimal mass ratio between first and second stage for 
+        Method for finding the optimal mass ratio between stages for 
         a given Launch Mass and Stage Isps
     Inputs:
             n:  Number of Stages
@@ -219,7 +223,7 @@ class Calculator(object):
     Returns:
             Dictionary with entries:
                 "Achieved Delta V": Delta V at optimal relative stage mass
-                "Optimal Stage Sizing Factor": Optimal mass of second stage as a factor of first stage mass
+                "Optimal Stage Sizing Factor": Optimal mass of second/third... stage as a factor of first/second... stage mass
         """
         delv_tot_max = 0
         size_fac_max = 0
