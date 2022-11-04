@@ -17,7 +17,9 @@ class GUI():
         self.tools["exporter"] = exporter
         self.root = 0
         self.entries = {}
+        self.data = {}
         self.result = 0
+        self.activeWindow = 0
         self.createMain()
 
     def createMain(self):
@@ -55,12 +57,9 @@ class GUI():
         self.root = Window
         self.result = tk.StringVar()
         self.result.set("")
-        input_frm = tk.Frame(relief = tk.SUNKEN, borderwidth = 3)
-        input_frm.pack()
-        button_frm = tk.Frame()
-        button_frm.pack()
         self.root.title("Tsiolkowsky Calculator")
         self.root.geometry("410x250")
+        input_frm, button_frm = self.basicWindowSetup()
         path = os.path.dirname(__file__)
         path = os.path.join(path, "back.png")
         back = tk.PhotoImage(file = path)
@@ -79,22 +78,153 @@ class GUI():
         self.entries["Isp"] = entries[0]
         self.entries["m0"] = entries[1]
         self.entries["mf"] = entries[2]
-        button = tk.Button(button_frm, text = "Calculate", command = self.calcTsiolkowsky)
+        button = tk.Button(button_frm, text = "Calculate", command = self.Tsiolkowsky_Calc)
         button.pack(side = tk.RIGHT)
         button = tk.Button(button_frm, text = "Clear Inputs", command = self.clear)
         button.pack(side = tk.LEFT)
         self.run()
 
-    def calcTsiolkowsky(self):
+    def Tsiolkowsky_Calc(self):
         isp = self.entries["Isp"].get() 
         m0  = self.entries["m0"].get()
         mf  = self.entries["mf"].get()
+        if isp == "" or m0 == "" or mf == "":
+            self.ErrorMsg("Missing Input Arguments")
+            return -1
         isp = float(isp)
         m0 = float(m0)
         mf = float(mf)
         result = self.tools["calculator"].Tsiolkowsky(isp, m0, mf)
         
         self.result.set(str(round(result,7)) + " m/s")
+
+    def delV(self):
+        """
+        inputs n, m, m_pl, isp
+        """
+        self.root.destroy()
+        Window = tk.Tk()
+        self.root = Window
+        self.result = tk.StringVar()
+        self.result.set("")
+        input_frm, button_frm = self.basicWindowSetup(parent = Window)
+        path = os.path.dirname(__file__)
+        path = os.path.join(path, "back.png")
+        back = tk.PhotoImage(file = path)
+        button = tk.Button(input_frm, image = back, command = self.back, borderwidth=0)
+        button.config(height = 40, width = 50)
+        button.grid(row = 0, column = 0)
+        self.root.title("Delta V Calculator")
+        self.root.geometry("410x300")
+        self.addLabelColumn(0, 1, ( "Num. of Stages:",
+                                    "Total Launch Mass:", "(incl. Payload)",
+                                    "Payload Mass:", 
+                                    "First Engine Isp:",
+                                    "Result           :"),
+                                    ("Arial Bold", 16), 
+                                    frame = input_frm)
+        entries = self.addEntryColumn(1, 1, 2, frame = input_frm)
+        label = tk.Label(input_frm, textvariable = self.result, font= ("Arial Bold", 16))
+        label.grid(row = 6, column = 1)
+        self.entries["num Stages"] = entries[0]
+        self.entries["m0"] = entries[1]
+        entries = self.addEntryColumn(1, 4, 2, frame = input_frm)
+        self.entries["m_pl"] = entries[0]
+        self.entries["Isp"] = (entries[1])
+        button = tk.Button(button_frm, text = "Add Fuel Masses", command = self.delV_AddFuel)
+        button.pack()
+        button = tk.Button(button_frm, text = "Add Isps for later Stages", command = self.delV_AddIsp)
+        button.pack()
+        button = tk.Button(button_frm, text = "Calculate", command = self.delV_Calc)
+        button.pack(side = tk.RIGHT)
+        button = tk.Button(button_frm, text = "Clear Inputs", command = self.clear)
+        button.pack(side = tk.LEFT)
+        self.run()
+
+    def delV_Calc(self):
+        """
+        inputs n, m, m_pl, isp
+        """
+        n = self.entries["num Stages"].get()
+        m0 = self.entries["m0"].get()
+        mpl = self.entries["m_pl"].get()
+        if n == "" or m0 == "" or mpl == "" or self.entries["Isp"].get() == "":
+            self.ErrorMsg("Missing Input Arguments")
+            return -1
+        n = int(n)
+        m0 = float(m0)
+        mpl = float(mpl)
+        isp = []
+        isp.append(float(self.entries["Isp"].get()))
+        try:
+            for val in self.data["Isps"]:
+                isp.append(val)
+        except KeyError:
+            isp = isp[0]
+        result = self.tools["calculator"].calcDelV(n, m0,  mpl, isp)
+        self.result.set(str(round(result, 4)) + " m/s" + "\t")
+        
+
+    def delV_AddIsp(self):
+        try:
+            num_stages = self.entries["num Stages"].get()
+        except KeyError:
+            self.entries = self.data["temp"]
+            num_stages = self.entries["num Stages"].get()
+        try:
+            num_stages = int(num_stages)
+        except:
+            num_stages = -1
+        if  num_stages <=1:
+            self.ErrorMsg("Adding further ISPs is only possible if the Number of Stages is at least 2")
+            return -1
+        Window = tk.Toplevel(self.root)
+        self.activeWindow = Window
+        window_height = 40 + num_stages*30
+        size = "200x" + str(int(window_height))
+        Window.geometry(size)
+        input_frm, button_frm = self.basicWindowSetup(parent = Window)
+        labels = []
+        for i in range(0,num_stages-1):
+            labels.append("ISP " + str(int(i+2)) + ": ")
+        self.addLabelColumn(_column = 0,startrow = 1, labels = labels, frame = input_frm, _font = ("Arial Bold", 16))
+        entries = self.addEntryColumn(1, 1, num_stages-1, frame = input_frm)
+        self.data["temp"] = self.entries
+        self.entries = {}
+        for i in range(0, num_stages-1):
+            key = "isp"+str(int(i+2))
+            self.entries[key] = entries[i]
+        button = tk.Button(button_frm, text = "Submit", command = self.delV_AddIsp_Submit)
+        button.pack(side = tk.RIGHT)
+        button = tk.Button(button_frm, text = "Clear Inputs", command = self.clear)
+        button.pack(side = tk.LEFT)
+
+
+    def delV_AddIsp_Submit(self):
+        self.data["Isps"] = []
+        for entry in self.entries:
+            data = self.entries[entry].get()
+            if data != "":
+                try:
+                    self.data["Isps"].append(float(self.entries[entry].get()))
+                except:
+                    self.ErrorMsg("Invalid ISP in at least one Field")
+                    self.activeWindow.destroy()
+                    self.entries = self.data["temp"]
+                    self.delV_AddIsp()
+                    return -1
+        print("Isp List:")
+        print(self.data["Isps"])
+        self.entries = self.data["temp"]
+        self.activeWindow.destroy()
+        
+
+
+    def delV_AddFuel(self):
+        self.placeholder()
+
+    def ErrorMsg(self, text):
+        msg_box = mb.showerror(title="Error", message=text)
 
     def clear(self):
         for entry in self.entries:
@@ -128,8 +258,17 @@ class GUI():
             _row += 1
         return entries
 
-    def delV(self):
-        self.placeholder()
+
+    def basicWindowSetup(self, parent = None):
+        if parent == None:
+            parent = self.root
+        input_frm = tk.Frame(parent, relief = tk.SUNKEN, borderwidth = 3)
+        input_frm.pack()
+        button_frm = tk.Frame(parent)
+        button_frm.pack()
+        return input_frm, button_frm
+
+
     def Point(self):
         self.placeholder()
     def Range(self):
