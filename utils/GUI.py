@@ -104,6 +104,7 @@ class GUI():
     def back(self):
         self.root.destroy()
         self.createMain()
+        self.entries = {}
         self.run()
 
     def addLabelColumn(self, _column, startrow, labels, _font, frame = None):
