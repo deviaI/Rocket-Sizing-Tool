@@ -1,6 +1,13 @@
+#!/usr/bin/env python
+'''
+# -*- coding: utf-8 -*-
+Created on  2022/10/26 09:23:69
+@author  Devial
+'''
 from utils.Calculators import Calculator
 from utils.Exporter import Exporter
 from utils.Plotters import Plotter
+from utils.GUI import GUI
 import os.path
 
 def main():
@@ -9,7 +16,11 @@ def main():
     Calc = Calculator()
     Exp = Exporter(os.path.join(base, "data"))
     Plt = Plotter(os.path.join(base, "data"))
+    gui = GUI()
 
+
+    gui.run()
+    
     #Example Calculations
 
     print(Calc.optimiseMassRatio(2, 12500, [311,343], 250, 0.1))
