@@ -101,11 +101,11 @@ class GUI():
         self.result.set("")
         input_frm, button_frm = self.basicWindowSetup(parent = Window)
         self.root.title("Delta V Calculator")
-        self.root.geometry("410x300")
-        self.addLabelColumn(0, 1, ( "Num. of Stages       :",
-                                    "Total Launch Mass :", "(incl. Payload)",
-                                    "Payload Mass      :", 
-                                    "First Engine Isp   :",
+        self.root.geometry("410x330")
+        self.addLabelColumn(0, 1, ( "Num. of Stages     :",
+                                    "Launch Mass :", "(excl. Payload)",
+                                    "Payload Mass  :", 
+                                    "First Engine Isp:",
                                     "Result                  :"),
                                     ("Arial Bold", 16), 
                                     frame = input_frm)
@@ -140,25 +140,28 @@ class GUI():
             self.ErrorMsg("Missing Input Arguments")
             return -1
         n = int(n)
-        m0 = float(m0)
         mpl = float(mpl)
         isp = []
         m_f = []
+        m_s = []
         isp.append(float(self.entries["Isp"].get()))
-        try:
+        if "Isps" in self.data:
             for val in self.data["Isps"]:
                 isp.append(val)
-        except KeyError:
+        else:
             isp = isp[0]
-        try:
+        if "fuels" in self.data:
             for val in self.data["fuels"]:
                 m_f.append(val)
-        except KeyError:
-            m_f = None
-        if m_f == None:
-            result = self.tools["calculator"].calcDelV(n, m0,  mpl, isp)
+        if "masses" in self.data:
+            for val in self.data["masses"]:
+                m_s.append(val)
         else:
-            result = self.tools["calculator"].calcDelV(n, m0, mpl, isp, m_f = m_f)
+            m_s = float(m0)
+        if len(m_f) == 0:
+            result = self.tools["calculator"].calcDelV(n, m_s,  mpl, isp)
+        else:
+            result = self.tools["calculator"].calcDelV(n, m_s, mpl, isp, m_f = m_f)
         self.result.set(str(round(result, 4)) + "m/s" + "\t")
         
 
@@ -180,7 +183,7 @@ class GUI():
         window_height = 40 + num_stages*30
         size = "200x" + str(int(window_height))
         Window.geometry(size)
-        input_frm, button_frm = self.basicWindowSetup(parent = Window)
+        input_frm, button_frm = self.basicWindowSetup(parent = Window, back_button = False)
         labels = []
         for i in range(0,num_stages-1):
             labels.append("ISP " + str(int(i+2)) + ": ")
@@ -191,6 +194,8 @@ class GUI():
         for i in range(0, num_stages-1):
             key = "isp"+str(int(i+2))
             self.entries[key] = entries[i]
+            if "Isps" in self.data:
+                self.entries[key].insert(0, self.data["Isps"][i])
         button = tk.Button(button_frm, text = "Submit", command = self.delV_AddIsp_Submit)
         button.pack(side = tk.RIGHT)
         button = tk.Button(button_frm, text = "Clear Inputs", command = self.clear)
@@ -234,7 +239,7 @@ class GUI():
         window_height = 40 + num_stages*30
         size = "200x" + str(int(window_height))
         Window.geometry(size)
-        input_frm, button_frm = self.basicWindowSetup(parent = Window)
+        input_frm, button_frm = self.basicWindowSetup(parent = Window, back_button = False)
         labels = []
         for i in range(0,num_stages):
             labels.append("Stage " + str(int(i+1)) + " fuel: ")
@@ -245,6 +250,8 @@ class GUI():
         for i in range(0, num_stages):
             key = "fuel"+str(int(i+1))
             self.entries[key] = entries[i]
+            if "fuels" in self.data:
+                self.entries[key].insert(0, self.data["fuels"][i])
         button = tk.Button(button_frm, text = "Submit", command = self.delV_AddFuel_Submit)
         button.pack(side = tk.RIGHT)
         button = tk.Button(button_frm, text = "Clear Inputs", command = self.clear)
@@ -271,9 +278,6 @@ class GUI():
         self.activeWindow.destroy()
     
     def delV_AddStageMasses(self):
-    
-        self.ErrorMsg("Function not yet Implemented")
-        raise NotImplementedError
         try:
             num_stages = self.entries["num Stages"].get()
         except KeyError:
@@ -291,31 +295,62 @@ class GUI():
         window_height = 40 + num_stages*30
         size = "200x" + str(int(window_height))
         Window.geometry(size)
-        input_frm, button_frm = self.basicWindowSetup(parent = Window)
+        input_frm, button_frm = self.basicWindowSetup(parent = Window, back_button = False)
         labels = []
         for i in range(0,num_stages):
-            labels.append("Stage " + str(int(i+1)) + " fuel: ")
+            labels.append("Stage " + str(int(i+1)) + " Mass: ")
         self.addLabelColumn(_column = 0,startrow = 1, labels = labels, frame = input_frm, _font = ("Arial Bold", 16))
         entries = self.addEntryColumn(1, 1, num_stages, frame = input_frm)
         self.data["temp"] = self.entries
         self.entries = {}
         for i in range(0, num_stages):
-            key = "fuel"+str(int(i+1))
+            key = "mass"+str(int(i+1))
             self.entries[key] = entries[i]
-        button = tk.Button(button_frm, text = "Submit", command = self.delV_AddFuel_Submit)
+            if "masses" in self.data:
+                self.entries[key].insert(0, self.data["masses"][i])
+        button = tk.Button(button_frm, text = "Submit", command = self.delV_AddStageMasses_Submit)
         button.pack(side = tk.RIGHT)
         button = tk.Button(button_frm, text = "Clear Inputs", command = self.clear)
         button.pack(side=tk.LEFT)
+
+    def delV_AddStageMasses_Submit(self):
+        self.data["masses"] = []
+        n = 0
+        for entry in self.entries:
+            n+=1
+            data = self.entries[entry].get()
+            if data != "":
+                try:
+                    self.data["masses"].append(float(self.entries[entry].get()))
+                except:
+                    self.ErrorMsg("Invalid Value in Field " + str(n))
+                    self.activeWindow.destroy()
+                    self.entries = self.data["temp"]
+                    self.delV_AddFuel()
+                    return -1
+        print("Mass List:")
+        print(self.data["masses"])
+        self.entries = self.data["temp"]
+        self.entries["m0"].delete(0, tk.END)
+        self.entries["m0"].insert(0, sum(self.data["masses"]))
+        self.activeWindow.destroy()
 
     def ErrorMsg(self, text):
         msg_box = mb.showerror(title="Error", message=text)
 
     def clear(self):
-        for entry in self.entries:
-            self.entries[entry].delete(0, tk.END)
+        try:
+            for entry in self.entries:
+                self.entries[entry].delete(0, tk.END)
+        except: 
+            self.entries = self.data["temp"]
+            for entry in self.entries:
+                self.entries[entry].delete(0, tk.END)
+        self.data = {}
         self.result.set("")
 
     def back(self):
+        self.data = {}
         self.root.destroy()
         self.createMain()
         self.entries = {}
@@ -343,20 +378,21 @@ class GUI():
         return entries
 
 
-    def basicWindowSetup(self, parent = None):
+    def basicWindowSetup(self, parent = None, back_button = True):
         if parent == None:
             parent = self.root
         input_frm = tk.Frame(parent, relief = tk.SUNKEN, borderwidth = 3)
         input_frm.pack()
         button_frm = tk.Frame(parent)
         button_frm.pack()
-        path = os.path.dirname(__file__)
-        path = os.path.join(path, "back.png")
-        back = tk.PhotoImage(file = path)
-        button = tk.Button(input_frm, image = back, command = self.back, borderwidth=0)
-        button.image = back
-        button.config(height = 40, width = 50)
-        button.grid(row = 0, column = 0)
+        if back_button:
+            path = os.path.dirname(__file__)
+            path = os.path.join(path, "back.png")
+            back = tk.PhotoImage(file = path)
+            button = tk.Button(input_frm, image = back, command = self.back, borderwidth=0)
+            button.image = back
+            button.config(height = 40, width = 50)
+            button.grid(row = 0, column = 0)
         return input_frm, button_frm
 
 

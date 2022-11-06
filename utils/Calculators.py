@@ -35,7 +35,7 @@ class Calculator(object):
             m_0: total launch mass
             m_pl: payload mass
             mu: Structural Factor or list of structural factors per stage
-            mu: relative stage to stage mass
+            size_fac: relative stage to stage mass
         
         Returns:
             list of stage masses (including payload as final stage), such that the sum of stage masses is the total launch mass
@@ -43,6 +43,13 @@ class Calculator(object):
         """
         m_s = []
         m_f = []
+        try:
+            if len(mu) == 1:
+                mu = mu[0]
+            elif len(mu) != n:
+                raise ValueError("Mu must either be value, or equal in length to number of Stages")
+        except:
+            mu = mu
         fac = 0
         for k in range(0,n):
             fac = fac + math.pow(size_fac, k)
@@ -121,10 +128,10 @@ class Calculator(object):
                     _m_s.append(m[i])
                     _m_f.append(_m_s[i] * 0.88)
                     _mu.append(0.12)
-            except:
+                _m_s.append(m_pl)
+            except TypeError:
                 _mu.append(0.12)
-                size_fac = self.optimiseMassRatio(n,m + m_pl, isp, m_pl, _mu)
-                _m_s, _m_f = self.MassSplit(n, m+m_pl, m_pl, _mu, size_fac)
+                return self.optimiseMassRatio(n,m + m_pl, isp, m_pl, _mu)["Achieved Delta V"]
         delta_v = 0
         for i in range(0,n):
             delta_v += self.Tsiolkowsky(_isp[i], sum(_m_s[i:n+1]), sum(_m_s[i:n+1]) - _m_f[i])
@@ -257,9 +264,9 @@ class Calculator(object):
                 print(i)
                 return -1
             for k in range(0,n):
-                if type(isp) == list:
+                try:
                     delv_tot += self.Tsiolkowsky(isp[k], sum(m_s[k:n+1]), sum(m_s[k:n+1]) - m_f[k])
-                else:
+                except TypeError:
                     delv_tot += self.Tsiolkowsky(isp, sum(m_s[k:n+1]), sum(m_s[k:n+1]) - m_f[k])
             if delv_tot > delv_tot_max:
                 delv_tot_max = delv_tot
