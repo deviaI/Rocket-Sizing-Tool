@@ -178,48 +178,8 @@ class GUI():
         if  num_stages <=1:
             self.ErrorMsg("Adding further ISPs is only possible if the Number of Stages is at least 2")
             return -1
-        Window = tk.Toplevel(self.root)
-        self.activeWindow = Window
-        window_height = 40 + num_stages*30
-        size = "200x" + str(int(window_height))
-        Window.geometry(size)
-        input_frm, button_frm = self.basicWindowSetup(parent = Window, back_button = False)
-        labels = []
-        for i in range(0,num_stages-1):
-            labels.append("ISP " + str(int(i+2)) + ": ")
-        self.addLabelColumn(_column = 0,startrow = 1, labels = labels, frame = input_frm, _font = ("Arial Bold", 16))
-        entries = self.addEntryColumn(1, 1, num_stages-1, frame = input_frm)
-        self.data["temp"] = self.entries
-        self.entries = {}
-        for i in range(0, num_stages-1):
-            key = "isp"+str(int(i+2))
-            self.entries[key] = entries[i]
-            if "Isps" in self.data:
-                self.entries[key].insert(0, self.data["Isps"][i])
-        button = tk.Button(button_frm, text = "Submit", command = self.delV_AddIsp_Submit)
-        button.pack(side = tk.RIGHT)
-        button = tk.Button(button_frm, text = "Clear Inputs", command = self.clear)
-        button.pack(side = tk.LEFT)
+        self.ListInputWindow(Field_Name="Isp Stage ", key_Name = "Isps", num_inputs = num_stages -1)
 
-
-    def delV_AddIsp_Submit(self):
-        self.data["Isps"] = []
-        for entry in self.entries:
-            data = self.entries[entry].get()
-            if data != "":
-                try:
-                    self.data["Isps"].append(float(self.entries[entry].get()))
-                except:
-                    self.ErrorMsg("Invalid ISP in at least one Field")
-                    self.activeWindow.destroy()
-                    self.entries = self.data["temp"]
-                    self.delV_AddIsp()
-                    return -1
-        print("Isp List:")
-        print(self.data["Isps"])
-        self.entries = self.data["temp"]
-        self.activeWindow.destroy()
-    
 
     def delV_AddFuel(self):
         try:
@@ -234,48 +194,8 @@ class GUI():
         if  num_stages <=0:
             self.ErrorMsg("Number of Stages must be entered first")
             return -1
-        Window = tk.Toplevel(self.root)
-        self.activeWindow = Window
-        window_height = 40 + num_stages*30
-        size = "200x" + str(int(window_height))
-        Window.geometry(size)
-        input_frm, button_frm = self.basicWindowSetup(parent = Window, back_button = False)
-        labels = []
-        for i in range(0,num_stages):
-            labels.append("Stage " + str(int(i+1)) + " fuel: ")
-        self.addLabelColumn(_column = 0,startrow = 1, labels = labels, frame = input_frm, _font = ("Arial Bold", 16))
-        entries = self.addEntryColumn(1, 1, num_stages, frame = input_frm)
-        self.data["temp"] = self.entries
-        self.entries = {}
-        for i in range(0, num_stages):
-            key = "fuel"+str(int(i+1))
-            self.entries[key] = entries[i]
-            if "fuels" in self.data:
-                self.entries[key].insert(0, self.data["fuels"][i])
-        button = tk.Button(button_frm, text = "Submit", command = self.delV_AddFuel_Submit)
-        button.pack(side = tk.RIGHT)
-        button = tk.Button(button_frm, text = "Clear Inputs", command = self.clear)
-        button.pack(side=tk.LEFT)
+        self.ListInputWindow(Field_Name = "Fuel, Stage ", num_inputs = num_stages, key_Name = "fuels")
 
-    def delV_AddFuel_Submit(self):
-        self.data["fuels"] = []
-        n = 0
-        for entry in self.entries:
-            n+=1
-            data = self.entries[entry].get()
-            if data != "":
-                try:
-                    self.data["fuels"].append(float(self.entries[entry].get()))
-                except:
-                    self.ErrorMsg("Invalid Value in Field " + str(n))
-                    self.activeWindow.destroy()
-                    self.entries = self.data["temp"]
-                    self.delV_AddFuel()
-                    return -1
-        print("Fuel List:")
-        print(self.data["fuels"])
-        self.entries = self.data["temp"]
-        self.activeWindow.destroy()
     
     def delV_AddStageMasses(self):
         try:
@@ -290,50 +210,7 @@ class GUI():
         if  num_stages <=0:
             self.ErrorMsg("Number of Stages must be entered first")
             return -1
-        Window = tk.Toplevel(self.root)
-        self.activeWindow = Window
-        window_height = 40 + num_stages*30
-        size = "200x" + str(int(window_height))
-        Window.geometry(size)
-        input_frm, button_frm = self.basicWindowSetup(parent = Window, back_button = False)
-        labels = []
-        for i in range(0,num_stages):
-            labels.append("Stage " + str(int(i+1)) + " Mass: ")
-        self.addLabelColumn(_column = 0,startrow = 1, labels = labels, frame = input_frm, _font = ("Arial Bold", 16))
-        entries = self.addEntryColumn(1, 1, num_stages, frame = input_frm)
-        self.data["temp"] = self.entries
-        self.entries = {}
-        for i in range(0, num_stages):
-            key = "mass"+str(int(i+1))
-            self.entries[key] = entries[i]
-            if "masses" in self.data:
-                self.entries[key].insert(0, self.data["masses"][i])
-        button = tk.Button(button_frm, text = "Submit", command = self.delV_AddStageMasses_Submit)
-        button.pack(side = tk.RIGHT)
-        button = tk.Button(button_frm, text = "Clear Inputs", command = self.clear)
-        button.pack(side=tk.LEFT)
-
-    def delV_AddStageMasses_Submit(self):
-        self.data["masses"] = []
-        n = 0
-        for entry in self.entries:
-            n+=1
-            data = self.entries[entry].get()
-            if data != "":
-                try:
-                    self.data["masses"].append(float(self.entries[entry].get()))
-                except:
-                    self.ErrorMsg("Invalid Value in Field " + str(n))
-                    self.activeWindow.destroy()
-                    self.entries = self.data["temp"]
-                    self.delV_AddFuel()
-                    return -1
-        print("Mass List:")
-        print(self.data["masses"])
-        self.entries = self.data["temp"]
-        self.entries["m0"].delete(0, tk.END)
-        self.entries["m0"].insert(0, sum(self.data["masses"]))
-        self.activeWindow.destroy()
+        self.ListInputWindow(Field_Name= "Mass of Stage ", key_Name="masses", num_inputs = num_stages)
 
     def ErrorMsg(self, text):
         msg_box = mb.showerror(title="Error", message=text)
@@ -395,6 +272,55 @@ class GUI():
             button.grid(row = 0, column = 0)
         return input_frm, button_frm
 
+    def ListInputWindow(self, Field_Name, num_inputs, key_Name = None):
+        Window = tk.Toplevel(self.root)
+        self.activeWindow = Window
+        window_height = 40 + num_inputs*30
+        size = "200x" + str(int(window_height))
+        Window.geometry(size)
+        input_frm, button_frm = self.basicWindowSetup(parent = Window, back_button = False)
+        labels = []
+        for i in range(0,num_inputs):
+            labels.append(Field_Name + str(i))
+        self.addLabelColumn(_column = 0,startrow = 1, labels = labels, frame = input_frm, _font = ("Arial Bold", 16))
+        entries = self.addEntryColumn(1, 1, num_inputs, frame = input_frm)
+        self.data["temp"] = self.entries
+        self.entries = {}
+        for i in range(0, num_inputs):
+            key = Field_Name+str(int(i+1))
+            self.entries[key] = entries[i]
+            if key_Name in self.data:
+                self.entries[key].insert(0, self.data[key_Name][i])
+        self.data["Window Data"]  = [Field_Name, key_Name, num_inputs]
+        button = tk.Button(button_frm, text = "Submit", command = self.ListInput_submit)
+        button.pack(side = tk.RIGHT)
+        button = tk.Button(button_frm, text = "Clear Inputs", command = self.clear)
+        button.pack(side=tk.LEFT)
+        return None
+
+    def ListInput_submit(self):
+        Key_Name = self.data["Window Data"][1]
+        self.data[Key_Name] = []
+        n = 0
+        for entry in self.entries:
+            n+=1
+            data = self.entries[entry].get()
+            if data != "":
+                try:
+                    self.data[Key_Name].append(float(self.entries[entry].get()))
+                except:
+                    self.ErrorMsg("Invalid Value in Field " + str(n))
+                    self.activeWindow.destroy()
+                    self.entries = self.data["temp"]
+                    self.ListInputWindow(self.data["Window Data"][0], Key_Name, self.data["Window Data"][2])
+                    return -1
+        print(self.data["Window Data"][0] + "List:")
+        print(self.data[Key_Name])
+        self.entries = self.data["temp"]
+        if "masses" in self.data:
+            self.entries["m0"].delete(0, tk.END)
+            self.entries["m0"].insert(0, sum(self.data["masses"]))
+        self.activeWindow.destroy()
 
     def Point(self):
         self.placeholder()
@@ -408,4 +334,3 @@ class GUI():
         msg_box = mb.showerror(title="Error", message="Function not yet Implemented")
     def run(self):
         self.root.mainloop()
-    
