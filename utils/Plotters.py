@@ -27,10 +27,8 @@ class Plotter(object):
             #Check for appropriate dimensions (Matplotlib Error message for mismtached dimensions not useful)
             raise ValueError("X and Y must have same length")
         #Plot the histogram
+        fig, ax = plt.subplots()
         plt.hist2d(self, dataX, dataY,  bins=(34,20), cmap=plt.cm.jet)
-        if show:
-            #Show the Plot
-            plt.show()
         if savefile:
             #Determine the Base directory
             if filename != None:
@@ -42,6 +40,10 @@ class Plotter(object):
                 filename = "plot" + datetime.now().strftime("%Y%m%d-%H_%M_%S")
                 filename = os.path.join(self.DataDir, filename)
                 plt.savefig(filename)
+        if show:
+            #Show the Plot
+            ax.legend()
+            plt.show()
 
 
     def colourMap(self, dataX, dataY, dataZ, show = 1, savefile = 0, filename = None):
@@ -63,9 +65,6 @@ class Plotter(object):
             None
 
         """
-        if len(dataX) != len(dataZ[0]) or len(dataY) != len(dataZ[2]):
-            #Check for Data dimensions
-            raise TypeError("Dimensions of DataZ must be (len(x), len(y))")
         #create the plot
 
         #Take 1-D input data dataX and dataY and tranform it into 2-D grid such that the gridpoints
@@ -83,7 +82,7 @@ class Plotter(object):
                 X[i, n] = dataX[n] #X maps the columns of dataZ
                 Y[i, n] = dataY[i] #Y maps the lines of dataZ
         fig, ax = plt.subplots()
-        ax.pcolormesh(X, Y, dataZ,edgecolors = "black", cmap = "YlGn")
+        CS = ax.pcolormesh(X, Y, dataZ,edgecolors = "black", cmap = "YlGn")
         #Note: Saveing MUST happen before displaying, since displaying overwrites fig
         #out of sequence ops cause a blank image to be saved instead of the generated plot
         if savefile:
@@ -99,6 +98,8 @@ class Plotter(object):
                 plt.savefig(filename)
         if show:
             #Show the Plot
+            cbar = fig.colorbar(CS)
+            cbar.ax.set_ylabel('')
             plt.show()
         plt.close("all")
 
@@ -121,9 +122,6 @@ class Plotter(object):
             None
 
         """
-        if len(dataX) != len(dataZ[0]) or len(dataY) != len(dataZ[2]):
-            #Check for Data dimensions
-            raise TypeError("Dimensions of DataZ must be (len(x), len(y))")
         #create the plot
 
         #Take 1-D input data dataX and dataY and tranform it into 2-D grid such that the gridpoints
@@ -141,7 +139,7 @@ class Plotter(object):
                 X[i, n] = dataX[n] #X maps the columns of dataZ
                 Y[i, n] = dataY[i] #Y maps the lines of dataZ
         fig, ax = plt.subplots()
-        ax.contourf(X, Y, dataZ, levels= 100)
+        CS = ax.contourf(X, Y, dataZ, levels= 1000)
         #Note: Saveing MUST happen before displaying, since displaying overwrites fig
         #out of sequence ops cause a blank image to be saved instead of the generated plot
         if savefile:
@@ -159,12 +157,14 @@ class Plotter(object):
                 plt.savefig(filename)
         if show:
             #Show the Plot
+            cbar = fig.colorbar(CS)
+            cbar.ax.set_ylabel('')
             plt.show()
         #close all plots
         plt.close("all")
 
 
-    def plot2D(self, dataX, dataY,xLab = None, yLab = None, show = 1, savefile = 0, filename = None, dataY_List = None):
+    def plot2D(self, dataX, dataY,xLab = None, yLab = None, show = 1, savefile = 0, filename = None, dataY_List = None, data_Labels = None):
         """
         Function for creating 2D colourmap plot
         
@@ -182,7 +182,11 @@ class Plotter(object):
             None
         """
         fig, ax = plt.subplots()
-        ax.plot(dataX, dataY, linewidth=2.0)
+        if data_Labels != None and type(data_Labels) != list:
+            data_Label = data_Labels
+        else:
+            data_Label = data_Labels[0]
+        ax.plot(dataX, dataY, linewidth=2.0, label = data_Label)
         ax.set_xlim(dataX.min(), dataX.max())
         #ax.set_ylim(0, 1000000)
         if xLab != None:
@@ -193,8 +197,9 @@ class Plotter(object):
         # ax.set_yscale("log")
         ax.grid(True)
         if dataY_List != None:
-            for data in dataY_List:
-                ax.plot(dataX, data, linewidth=2.0)
+            for i in range(0, len(dataY_List)):
+                data_Label = data_Labels[i]
+                ax.plot(dataX, dataY_List[i], linewidth=2.0)
         if savefile:
             #Determine the Base directory
             base = os.path.dirname(__file__) #File Directory (utils)
@@ -210,6 +215,7 @@ class Plotter(object):
                 plt.savefig(filename)
         if show:
             #Show the Plot
+            ax.legend()
             plt.show()
         #close all plots
         plt.close("all")

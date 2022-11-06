@@ -158,7 +158,7 @@ class Calculator(object):
                 break
             m_0 = m_0_
         m_0 = m_0_
-        return m_0, size_fac
+        return m_0, size_fac, m_f
 
     
     def calcRange(self, n, RangeVariable,  isp, m_pl, mu, delv = 9000, limit = 1e6, numSteps=100, **kwargs):
@@ -190,9 +190,9 @@ class Calculator(object):
             isp = np.linspace(isp[0], isp[-1], numSteps)
             for i in range(0, numSteps):
                 if "size_fac" in kwargs:
-                    Y[0, i], Y[2, i] = self.calcPoint(n, isp[i], m_pl, mu, delv, limit, kwargs["size_fac"])
+                    Y[0, i], Y[2, i] = self.calcPoint(n, isp[i], m_pl, mu, delv, limit, kwargs["size_fac"])[0:2]
                 else:
-                    Y[0, i], Y[2, i] = self.calcPoint(n, isp[i], m_pl, mu, delv, limit)
+                    Y[0, i], Y[2, i] = self.calcPoint(n, isp[i], m_pl, mu, delv, limit)[0:2]
                 Y[1, i] = isp[i]
         elif RangeVariable == "mu":
             if not(type(mu) == list):
@@ -200,9 +200,9 @@ class Calculator(object):
             mu = np.linspace(mu[0], mu[-1], numSteps)
             for i in range(0, numSteps):
                 if "size_fac" in kwargs:
-                    Y[0, i], Y[2, i] = self.calcPoint(n, isp, m_pl, mu[i], delv, limit, kwargs["size_fac"])
+                    Y[0, i], Y[2, i] = self.calcPoint(n, isp, m_pl, mu[i], delv, limit, kwargs["size_fac"])[0:2]
                 else:
-                    Y[0, i], Y[2, i] = self.calcPoint(n, isp, m_pl, mu[i], delv, limit)
+                    Y[0, i], Y[2, i] = self.calcPoint(n, isp, m_pl, mu[i], delv, limit)[0:2]
                 Y[1, i] = mu[i]
         else:
             raise Exception("Unknown RangeVariable")
@@ -249,10 +249,78 @@ class Calculator(object):
         results["Optimal Stage Sizing Factor"] = size_fac_max
         return results
 
+    def calcReqFuel(self, n, isp, m_pl, mu = 0.12, delv = 9000, limit = 1e6, **kwargs):
+        """
+        Method for returning the required fuel of a Rocket based on:
+        Engine Isp,  Structure Factor, Payload Mass and target Delta V
+
+        Inputs:
+            n:   Number of Stages
+            Isp: Isp of all Engines
+                    OR
+                    List of Isps for each Engine
+            m_pl: Payload Mass in kg
+            mu: Structure Factor // Default = 0.12
+            delv: Target Delta V // Default = 90000 m/s
+            limit: Upper mass limit for divergence cut off // Default = 1e6
+
+        Optional Inputs:
+            size_fac: relative stage to stage mass
+                        If not given, it is calculated to be optimal
+            mix_rat: Mass mixture ratio O/F 
+            dens: density of propelant [dens Oxidzer, dens Fuel]
+            fueltype: fuel type. If handed, mix_rat and dens are taken from typical values
+                    Recognised Values: HydroLox, KeroLox, MethaLox
+                    // if both fueltype and mix_rat are handed, the specified mixture ratio will be used
+        Returns:
+            Total Propellant mass
+            Oxidzer Mass if "fueltype" or "mix_rat" is given. Else -1
+            Fuel Mass if "fueltype" or "mix_rat" is given. Else -1
+            Oxidzer Volume (m^3) if "fueltype" or "mix_rat" and "dens" is given. Else -1
+            Fuel Volume (m^3) if "fueltype" or "mix_rat" and "dens" is given. Else -1
+            
+
+        """
+        fuelSpecs = {}
+        fuelSpecs["density"] = {}
+        fuelSpecs["Mix Ratio"] = {}
+        fuelSpecs["density"]["HydroLox"] = (1140 , 71)
+        fuelSpecs["density"]["KeroLox"] = (1140 , 800)
+        fuelSpecs["density"]["MethaLox"] = (1140 , 423)
+        fuelSpecs["Mix ratio"]["HydroLox"] = 6
+        fuelSpecs["Mix ratio"]["KeroLox"] = 2.3
+        fuelSpecs["Mix ratio"]["MethaLox"] = 3.5
+
+        if "size_fac" in kwargs:
+            m_p = self.calcPoint(n, isp, m_pl, mu, delv, limit, size_fac = kwargs["size_fac"])[-1]
+        else:
+            m_p = self.calcPoint(n, isp, m_pl, mu, delv, limit)[-1]
+        m_p = sum(m_p)
+        if "fueltype" in kwargs:
+            try:
+                dens = fuelSpecs["density"][kwargs["fueltype"]]
+                mix_rat = fuelSpecs["Mix Ratio"][kwargs["fueltype"]]
+            except:
+                raise ValueError("Unrecognised Fuel Type. Options are: 'HydroLox', 'KeroLox' or 'MethaLox'")
+        elif "mix_rat" not in kwargs:
+            return m_p, -1, -1, -1, -1
+        if "mix_rat" in kwargs:
+            mix_rat = kwargs["mix"]
+
+        m_o =  (m_p * mix_rat)/(1+mix_rat)
+        m_f =  m_p/(1+mix_rat)
+        if "dens" not in kwargs and "fueltype" not in kwargs:
+            return m_p, m_o, m_f, -1, -1
+        else:
+            v_o =  m_o / dens[0]
+            v_f = m_f / dens[1]
+            return m_p, m_o, m_f, v_o, v_f
+
 
     #//////////////////////////////////////
     #OBSOLETE
-    #/////////////////////////////////////0
+    #//////////////////////////////////////
+    
     def f(self, mu, isp, m_pl, delv, limit):
         """
         Method for returning the launch mass of an SSTO based on:
