@@ -34,7 +34,7 @@ class Calculator(object):
             n: number of stages
             m_0: total launch mass
             m_pl: payload mass
-            mu: Structural Factor
+            mu: Structural Factor or list of structural factors per stage
             mu: relative stage to stage mass
         
         Returns:
@@ -51,7 +51,10 @@ class Calculator(object):
             m_s.append(m_s[k-1]*size_fac)
         m_s.append(m_pl)
         for k in range(0,n):
-            m_f.append(m_s[k] * (1-mu))
+            try:
+                m_f.append(m_s[k] * (1-mu[k]))
+            except:
+                m_f.append(m_s[k] * (1-mu))
         sanity_check = sum(m_s) < m_0*1.01 and sum(m_s) > m_0*0.99
         if not(sanity_check):
             print("sanity check failed")
@@ -64,7 +67,7 @@ class Calculator(object):
 
         Inputs:
         n: Number of Stages
-        m: Total Launch Mass of Rocket 
+        m: Launch Mass of Rocket /wo Payload
            OR
            List of Stage Masses /wo Payload (such that the sum of the Stage Masses is the Launch Mass /wo Paylaod)
            ///If only launch mass is given, an optimal stage to stage mass ratio is determined
@@ -75,7 +78,7 @@ class Calculator(object):
         Optional Input:
         m_f: List of propellant mass per stage
             //If Not given, a structure factor of 12% is assumed. 
-            //Can only be specified if m is a list of stage masses
+            //Can only be specified if len(m) == len(m_f) == n (can be value or array like for n = 1, must be array like for n>1)
         
         Returns:
             Achievable Delta V
@@ -83,6 +86,7 @@ class Calculator(object):
         _isp = []
         _m_s = []
         _m_f = []
+        _mu = []
         try:
             for i in range(0,n):
                 _isp.append(isp[i])
@@ -90,24 +94,40 @@ class Calculator(object):
             for i in range(0,n):
                 _isp.append(isp)
         if "m_f" in kwargs:
-            if type(kwargs["m_f"]) != list:
-                raise TypeError("m_f must be list")
-            if type(m) != list:
-                raise TypeError("m must be list if m_f is given")
-            for i in range(0,n):
-                _m_s.append(m[i])
-            for i in range(0,n):
-                 _m_f.append(kwargs["m_f"][i])
-        else:
-            if type(m) != list:
-                _m_s, _m_f = self.MassSplit(n, m, m_pl, 0.12, 0.5)
+            m_f = kwargs["m_f"]
+            if n > 1:
+                try:
+                    if len(m) == len(m_f):
+                        for i in range(0.,n):
+                            _m_s.append(m[i])
+                            _m_f.append(m_f[i])
+                            _mu.append(1 - m_f[i]/m[i])
+                        _m_s.append(m_pl)
+                except:
+                    raise ValueError("m and m_f must both be arraay like with length n")
             else:
+                try:
+                    _m_s.append(m[0])
+                except:
+                    _m_s.append(m)
+                try:
+                    _m_f.append(m_f[0])
+                except:
+                    _m_f.append(m_f)
+                _mu.append(1 - _m_f[0]/_m_s[0])
+        else:
+            try:
                 for i in range(0,n):
                     _m_s.append(m[i])
-                    _m_f = _m_s[i] * 0.88
+                    _m_f.append(_m_s[i] * 0.88)
+                    _mu.append(0.12)
+            except:
+                _mu.append(0.12)
+                size_fac = self.optimiseMassRatio(n,m + m_pl, isp, m_pl, _mu)
+                _m_s, _m_f = self.MassSplit(n, m+m_pl, m_pl, _mu, size_fac)
         delta_v = 0
         for i in range(0,n):
-            delta_v += self.Tsiolkowsky(_isp[i], sum(_m_s[i:n]), sum(_m_s[i:n]) - _m_f[i])
+            delta_v += self.Tsiolkowsky(_isp[i], sum(_m_s[i:n+1]), sum(_m_s[i:n+1]) - _m_f[i])
         return delta_v
 
 

@@ -19,15 +19,13 @@ class GUI():
         self.entries = {}
         self.data = {}
         self.result = 0
+        self.img1 = None
         self.activeWindow = 0
         self.createMain()
 
     def createMain(self):
         Window =  tk.Tk()
         self.root = Window
-        self.populateMain()
-
-    def populateMain(self):
         self.root.title("Rocket Sizing Tool")
         self.root.geometry("390x400")
         label = tk.Label(self.root, text="Choose Calculation", font = ("comic sans", 30))
@@ -60,16 +58,10 @@ class GUI():
         self.root.title("Tsiolkowsky Calculator")
         self.root.geometry("410x250")
         input_frm, button_frm = self.basicWindowSetup()
-        path = os.path.dirname(__file__)
-        path = os.path.join(path, "back.png")
-        back = tk.PhotoImage(file = path)
-        button = tk.Button(input_frm, image = back, command = self.back, borderwidth=0)
-        button.config(height = 40, width = 50)
-        button.grid(row = 0, column = 0)
         self.addLabelColumn(0, 1, ( "Isp                  :",
                                     "Starting Mass:", 
                                     "Final Mass     :",
-                                    "Result           :"),
+                                    "Result            :"),
                                     ("Arial Bold", 16), 
                                     frame = input_frm)
         entries = self.addEntryColumn(1, 1, 3, frame = input_frm)
@@ -108,19 +100,13 @@ class GUI():
         self.result = tk.StringVar()
         self.result.set("")
         input_frm, button_frm = self.basicWindowSetup(parent = Window)
-        path = os.path.dirname(__file__)
-        path = os.path.join(path, "back.png")
-        back = tk.PhotoImage(file = path)
-        button = tk.Button(input_frm, image = back, command = self.back, borderwidth=0)
-        button.config(height = 40, width = 50)
-        button.grid(row = 0, column = 0)
         self.root.title("Delta V Calculator")
         self.root.geometry("410x300")
-        self.addLabelColumn(0, 1, ( "Num. of Stages:",
-                                    "Total Launch Mass:", "(incl. Payload)",
-                                    "Payload Mass:", 
-                                    "First Engine Isp:",
-                                    "Result           :"),
+        self.addLabelColumn(0, 1, ( "Num. of Stages       :",
+                                    "Total Launch Mass :", "(incl. Payload)",
+                                    "Payload Mass      :", 
+                                    "First Engine Isp   :",
+                                    "Result                  :"),
                                     ("Arial Bold", 16), 
                                     frame = input_frm)
         entries = self.addEntryColumn(1, 1, 2, frame = input_frm)
@@ -135,12 +121,14 @@ class GUI():
         button.pack()
         button = tk.Button(button_frm, text = "Add Isps for later Stages", command = self.delV_AddIsp)
         button.pack()
+        button = tk.Button(button_frm, text = "Specify List of Stage Masses", command = self.delV_AddStageMasses)
+        button.pack()
         button = tk.Button(button_frm, text = "Calculate", command = self.delV_Calc)
         button.pack(side = tk.RIGHT)
         button = tk.Button(button_frm, text = "Clear Inputs", command = self.clear)
         button.pack(side = tk.LEFT)
         self.run()
-
+    
     def delV_Calc(self):
         """
         inputs n, m, m_pl, isp
@@ -155,14 +143,23 @@ class GUI():
         m0 = float(m0)
         mpl = float(mpl)
         isp = []
+        m_f = []
         isp.append(float(self.entries["Isp"].get()))
         try:
             for val in self.data["Isps"]:
                 isp.append(val)
         except KeyError:
             isp = isp[0]
-        result = self.tools["calculator"].calcDelV(n, m0,  mpl, isp)
-        self.result.set(str(round(result, 4)) + " m/s" + "\t")
+        try:
+            for val in self.data["fuels"]:
+                m_f.append(val)
+        except KeyError:
+            m_f = None
+        if m_f == None:
+            result = self.tools["calculator"].calcDelV(n, m0,  mpl, isp)
+        else:
+            result = self.tools["calculator"].calcDelV(n, m0, mpl, isp, m_f = m_f)
+        self.result.set(str(round(result, 4)) + "m/s" + "\t")
         
 
     def delV_AddIsp(self):
@@ -217,11 +214,98 @@ class GUI():
         print(self.data["Isps"])
         self.entries = self.data["temp"]
         self.activeWindow.destroy()
-        
-
+    
 
     def delV_AddFuel(self):
-        self.placeholder()
+        try:
+            num_stages = self.entries["num Stages"].get()
+        except KeyError:
+            self.entries = self.data["temp"]
+            num_stages = self.entries["num Stages"].get()
+        try:
+            num_stages = int(num_stages)
+        except:
+            num_stages = -1
+        if  num_stages <=0:
+            self.ErrorMsg("Number of Stages must be entered first")
+            return -1
+        Window = tk.Toplevel(self.root)
+        self.activeWindow = Window
+        window_height = 40 + num_stages*30
+        size = "200x" + str(int(window_height))
+        Window.geometry(size)
+        input_frm, button_frm = self.basicWindowSetup(parent = Window)
+        labels = []
+        for i in range(0,num_stages):
+            labels.append("Stage " + str(int(i+1)) + " fuel: ")
+        self.addLabelColumn(_column = 0,startrow = 1, labels = labels, frame = input_frm, _font = ("Arial Bold", 16))
+        entries = self.addEntryColumn(1, 1, num_stages, frame = input_frm)
+        self.data["temp"] = self.entries
+        self.entries = {}
+        for i in range(0, num_stages):
+            key = "fuel"+str(int(i+1))
+            self.entries[key] = entries[i]
+        button = tk.Button(button_frm, text = "Submit", command = self.delV_AddFuel_Submit)
+        button.pack(side = tk.RIGHT)
+        button = tk.Button(button_frm, text = "Clear Inputs", command = self.clear)
+        button.pack(side=tk.LEFT)
+
+    def delV_AddFuel_Submit(self):
+        self.data["fuels"] = []
+        n = 0
+        for entry in self.entries:
+            n+=1
+            data = self.entries[entry].get()
+            if data != "":
+                try:
+                    self.data["fuels"].append(float(self.entries[entry].get()))
+                except:
+                    self.ErrorMsg("Invalid Value in Field " + str(n))
+                    self.activeWindow.destroy()
+                    self.entries = self.data["temp"]
+                    self.delV_AddFuel()
+                    return -1
+        print("Fuel List:")
+        print(self.data["fuels"])
+        self.entries = self.data["temp"]
+        self.activeWindow.destroy()
+    
+    def delV_AddStageMasses(self):
+    
+        self.ErrorMsg("Function not yet Implemented")
+        raise NotImplementedError
+        try:
+            num_stages = self.entries["num Stages"].get()
+        except KeyError:
+            self.entries = self.data["temp"]
+            num_stages = self.entries["num Stages"].get()
+        try:
+            num_stages = int(num_stages)
+        except:
+            num_stages = -1
+        if  num_stages <=0:
+            self.ErrorMsg("Number of Stages must be entered first")
+            return -1
+        Window = tk.Toplevel(self.root)
+        self.activeWindow = Window
+        window_height = 40 + num_stages*30
+        size = "200x" + str(int(window_height))
+        Window.geometry(size)
+        input_frm, button_frm = self.basicWindowSetup(parent = Window)
+        labels = []
+        for i in range(0,num_stages):
+            labels.append("Stage " + str(int(i+1)) + " fuel: ")
+        self.addLabelColumn(_column = 0,startrow = 1, labels = labels, frame = input_frm, _font = ("Arial Bold", 16))
+        entries = self.addEntryColumn(1, 1, num_stages, frame = input_frm)
+        self.data["temp"] = self.entries
+        self.entries = {}
+        for i in range(0, num_stages):
+            key = "fuel"+str(int(i+1))
+            self.entries[key] = entries[i]
+        button = tk.Button(button_frm, text = "Submit", command = self.delV_AddFuel_Submit)
+        button.pack(side = tk.RIGHT)
+        button = tk.Button(button_frm, text = "Clear Inputs", command = self.clear)
+        button.pack(side=tk.LEFT)
 
     def ErrorMsg(self, text):
         msg_box = mb.showerror(title="Error", message=text)
@@ -252,7 +336,7 @@ class GUI():
         if frame == None:
             frame = self.root
         for i in range(0, num):
-            entry = tk.Entry(frame, width = 50)
+            entry = tk.Entry(frame, width = 30)
             entry.grid(row = _row, column = _column)
             entries.append(entry)
             _row += 1
@@ -266,6 +350,13 @@ class GUI():
         input_frm.pack()
         button_frm = tk.Frame(parent)
         button_frm.pack()
+        path = os.path.dirname(__file__)
+        path = os.path.join(path, "back.png")
+        back = tk.PhotoImage(file = path)
+        button = tk.Button(input_frm, image = back, command = self.back, borderwidth=0)
+        button.image = back
+        button.config(height = 40, width = 50)
+        button.grid(row = 0, column = 0)
         return input_frm, button_frm
 
 
