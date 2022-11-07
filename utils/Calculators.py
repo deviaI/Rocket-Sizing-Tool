@@ -34,8 +34,8 @@ class Calculator(object):
             n: number of stages
             m_0: total launch mass
             m_pl: payload mass
-            mu: Structural Factor
-            mu: relative stage to stage mass
+            mu: Structural Factor or list of structural factors per stage
+            size_fac: relative stage to stage mass
         
         Returns:
             list of stage masses (including payload as final stage), such that the sum of stage masses is the total launch mass
@@ -43,6 +43,13 @@ class Calculator(object):
         """
         m_s = []
         m_f = []
+        try:
+            if len(mu) == 1:
+                mu = mu[0]
+            elif len(mu) != n:
+                raise ValueError("Mu must either be value, or equal in length to number of Stages")
+        except:
+            mu = mu
         fac = 0
         for k in range(0,n):
             fac = fac + math.pow(size_fac, k)
@@ -51,7 +58,10 @@ class Calculator(object):
             m_s.append(m_s[k-1]*size_fac)
         m_s.append(m_pl)
         for k in range(0,n):
-            m_f.append(m_s[k] * (1-mu))
+            try:
+                m_f.append(m_s[k] * (1-mu[k]))
+            except:
+                m_f.append(m_s[k] * (1-mu))
         sanity_check = sum(m_s) < m_0*1.01 and sum(m_s) > m_0*0.99
         if not(sanity_check):
             print("sanity check failed")
@@ -64,7 +74,7 @@ class Calculator(object):
 
         Inputs:
         n: Number of Stages
-        m: Total Launch Mass of Rocket 
+        m: Launch Mass of Rocket /wo Payload
            OR
            List of Stage Masses /wo Payload (such that the sum of the Stage Masses is the Launch Mass /wo Paylaod)
            ///If only launch mass is given, an optimal stage to stage mass ratio is determined
@@ -75,7 +85,7 @@ class Calculator(object):
         Optional Input:
         m_f: List of propellant mass per stage
             //If Not given, a structure factor of 12% is assumed. 
-            //Can only be specified if m is a list of stage masses
+            //Can only be specified if len(m) == len(m_f) == n (can be value or array like for n = 1, must be array like for n>1)
         
         Returns:
             Achievable Delta V
@@ -83,6 +93,7 @@ class Calculator(object):
         _isp = []
         _m_s = []
         _m_f = []
+        _mu = []
         try:
             for i in range(0,n):
                 _isp.append(isp[i])
@@ -90,24 +101,40 @@ class Calculator(object):
             for i in range(0,n):
                 _isp.append(isp)
         if "m_f" in kwargs:
-            if type(kwargs["m_f"]) != list:
-                raise TypeError("m_f must be list")
-            if type(m) != list:
-                raise TypeError("m must be list if m_f is given")
-            for i in range(0,n):
-                _m_s.append(m[i])
-            for i in range(0,n):
-                 _m_f.append(kwargs["m_f"][i])
-        else:
-            if type(m) != list:
-                _m_s, _m_f = self.MassSplit(n, m, m_pl, 0.12, 0.5)
+            m_f = kwargs["m_f"]
+            if n > 1:
+                try:
+                    if len(m) == len(m_f):
+                        for i in range(0.,n):
+                            _m_s.append(m[i])
+                            _m_f.append(m_f[i])
+                            _mu.append(1 - m_f[i]/m[i])
+                        _m_s.append(m_pl)
+                except:
+                    raise ValueError("m and m_f must both be arraay like with length n")
             else:
+                try:
+                    _m_s.append(m[0])
+                except:
+                    _m_s.append(m)
+                try:
+                    _m_f.append(m_f[0])
+                except:
+                    _m_f.append(m_f)
+                _mu.append(1 - _m_f[0]/_m_s[0])
+        else:
+            try:
                 for i in range(0,n):
                     _m_s.append(m[i])
-                    _m_f = _m_s[i] * 0.88
+                    _m_f.append(_m_s[i] * 0.88)
+                    _mu.append(0.12)
+                _m_s.append(m_pl)
+            except TypeError:
+                _mu.append(0.12)
+                return self.optimiseMassRatio(n,m + m_pl, isp, m_pl, _mu)["Achieved Delta V"]
         delta_v = 0
         for i in range(0,n):
-            delta_v += self.Tsiolkowsky(_isp[i], sum(_m_s[i:n]), sum(_m_s[i:n]) - _m_f[i])
+            delta_v += self.Tsiolkowsky(_isp[i], sum(_m_s[i:n+1]), sum(_m_s[i:n+1]) - _m_f[i])
         return delta_v
 
 
@@ -146,9 +173,9 @@ class Calculator(object):
                 size_fac = self.optimiseMassRatio(n, m_0, isp, m_pl, mu)["Optimal Stage Sizing Factor"]
             m_s, m_f = self.MassSplit(n, m_0, m_pl, mu, size_fac)
             for k in range(0,n):
-                if type(isp) == list:
+                try:
                     delv_tot += self.Tsiolkowsky(isp[k], sum(m_s[k:n+1]), sum(m_s[k:n+1]) - m_f[k])
-                else:
+                except:
                     delv_tot += self.Tsiolkowsky(isp, sum(m_s[k:n+1]), sum(m_s[k:n+1]) - m_f[k])
             m_0_ = (1+(delv-delv_tot)/delv) * m_0
             if abs((m_0_-m_0)/m_0) < 0.0001:
@@ -168,6 +195,7 @@ class Calculator(object):
 
         Inputs:
             n:   Number of Stages
+            RangeVariable: "Isp" or "Mu"
             Isp: Isp of all Engines
                  OR
                  List of Isps for each Engine
@@ -181,23 +209,25 @@ class Calculator(object):
                       If not given, it is calculated to be optimal
 
         Returns:
-            np.array with column [0] containing mass and column [1] containing the corresponding Range Variable (either isp or mu)
+            np.array with column [0] containing mass, column [1] containing the corresponding Range Variable (either isp or mu) and column 3 containing the rel. stage sizing
         """
         Y = np.zeros((3, numSteps))
-        if RangeVariable == "isp":
-            if not(type(isp) == list):
-                raise TypeError("RangeVariable must be list")
-            isp = np.linspace(isp[0], isp[-1], numSteps)
+        if RangeVariable == "Isp":
+            try:
+                isp = np.linspace(isp[0], isp[-1], numSteps)
+            except TypeError:
+                raise TypeError("Range Variable must be array like")
             for i in range(0, numSteps):
                 if "size_fac" in kwargs:
                     Y[0, i], Y[2, i] = self.calcPoint(n, isp[i], m_pl, mu, delv, limit, kwargs["size_fac"])[0:2]
                 else:
                     Y[0, i], Y[2, i] = self.calcPoint(n, isp[i], m_pl, mu, delv, limit)[0:2]
                 Y[1, i] = isp[i]
-        elif RangeVariable == "mu":
-            if not(type(mu) == list):
+        elif RangeVariable == "Mu":
+            try:
+                mu = np.linspace(mu[0], mu[-1], numSteps)
+            except:
                 raise TypeError("RangeVariable must be list")
-            mu = np.linspace(mu[0], mu[-1], numSteps)
             for i in range(0, numSteps):
                 if "size_fac" in kwargs:
                     Y[0, i], Y[2, i] = self.calcPoint(n, isp, m_pl, mu[i], delv, limit, kwargs["size_fac"])[0:2]
@@ -227,6 +257,11 @@ class Calculator(object):
         """
         delv_tot_max = 0
         size_fac_max = 0
+        try:
+            if len(isp) == 1:
+                isp = isp[0]
+        except:
+            pass
         for i in range(1,99):
             delv_tot = 0
             m_s, m_f = self.MassSplit(n, m_0, m_pl, mu, i*1e-2)
@@ -237,9 +272,9 @@ class Calculator(object):
                 print(i)
                 return -1
             for k in range(0,n):
-                if type(isp) == list:
+                try:
                     delv_tot += self.Tsiolkowsky(isp[k], sum(m_s[k:n+1]), sum(m_s[k:n+1]) - m_f[k])
-                else:
+                except:
                     delv_tot += self.Tsiolkowsky(isp, sum(m_s[k:n+1]), sum(m_s[k:n+1]) - m_f[k])
             if delv_tot > delv_tot_max:
                 delv_tot_max = delv_tot
@@ -287,10 +322,22 @@ class Calculator(object):
         fuelSpecs["density"]["HydroLox"] = (1140 , 71)
         fuelSpecs["density"]["KeroLox"] = (1140 , 800)
         fuelSpecs["density"]["MethaLox"] = (1140 , 423)
+<<<<<<< HEAD
         fuelSpecs["Mix ratio"]["HydroLox"] = 6
         fuelSpecs["Mix ratio"]["KeroLox"] = 2.3
         fuelSpecs["Mix ratio"]["MethaLox"] = 3.5
 
+=======
+        fuelSpecs["Mix Ratio"]["HydroLox"] = 6
+        fuelSpecs["Mix Ratio"]["KeroLox"] = 2.3
+        fuelSpecs["Mix Ratio"]["MethaLox"] = 3.5
+        dels = []
+        for val in kwargs:
+            if kwargs[val] == -1:
+                dels.append(val)
+        for val in dels:
+            del kwargs[val] 
+>>>>>>> GUI
         if "size_fac" in kwargs:
             m_p = self.calcPoint(n, isp, m_pl, mu, delv, limit, size_fac = kwargs["size_fac"])[-1]
         else:
@@ -305,7 +352,11 @@ class Calculator(object):
         elif "mix_rat" not in kwargs:
             return m_p, -1, -1, -1, -1
         if "mix_rat" in kwargs:
+<<<<<<< HEAD
             mix_rat = kwargs["mix"]
+=======
+            mix_rat = kwargs["mix_rat"]
+>>>>>>> GUI
 
         m_o =  (m_p * mix_rat)/(1+mix_rat)
         m_f =  m_p/(1+mix_rat)

@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+'''
+# -*- coding: utf-8 -*-
+Created on  2022/11/02 09:58:16
+@author  Devial
+'''
 import matplotlib.pyplot as plt
 import os.path
 from datetime import datetime
@@ -34,11 +40,19 @@ class Plotter(object):
             if filename != None:
                 #Create path by joining base, data and filename
                 filename = os.path.join(self.DataDir, filename)
+                i=1
+                while os.path.isfile(filename + ".png"):
+                    filename += "(" + str(i) + ")"
+                    i+=1
                 plt.savefig(filename)
             else:
                 #if no filename specified, filename becomes current date and time
                 filename = "plot" + datetime.now().strftime("%Y%m%d-%H_%M_%S")
                 filename = os.path.join(self.DataDir, filename)
+                i=1
+                while os.path.isfile(filename + ".png"):
+                    filename += "(" + str(i) + ")"
+                    i+=1
                 plt.savefig(filename)
         if show:
             #Show the Plot
@@ -46,7 +60,7 @@ class Plotter(object):
             plt.show()
 
 
-    def colourMap(self, dataX, dataY, dataZ, show = 1, savefile = 0, filename = None):
+    def colourMap(dataX, dataY, dataZ, show = 1, savefile = 0, filename = None):
         """
         Function for creating 2D colourmap plot
         
@@ -87,14 +101,24 @@ class Plotter(object):
         #out of sequence ops cause a blank image to be saved instead of the generated plot
         if savefile:
             #Determine the Base directory
+            base = os.path.dirname(__file__) #Directory of File (utils)
+            base = os.path.split(base)[0]   #Splits directory at utils, returns project dir
             if filename != None:
                 #Create path by joininh base, data and filename
-                filename = os.path.join(self.DataDir, filename)
+                filename = os.path.join(base, "results", filename)
+                i=1
+                while os.path.isfile(filename + ".png"):
+                    filename += "(" + str(i) + ")"
+                    i+=1
                 plt.savefig(filename)
             else:
                 #if no filename specified, filename becomes current date and time
                 filename = "plot" + datetime.now().strftime("%Y%m%d-%H_%M_%S")
-                filename = os.path.join(self.DataDir, filename)
+                filename = os.path.join(base, "results", filename)
+                i=1
+                while os.path.isfile(filename + ".png"):
+                    filename += "(" + str(i) + ")"
+                    i+=1
                 plt.savefig(filename)
         if show:
             #Show the Plot
@@ -103,7 +127,8 @@ class Plotter(object):
             plt.show()
         plt.close("all")
 
-    def contour(self, dataX, dataY, dataZ, show = 1, savefile = 0, filename = None):
+
+    def contour(dataX, dataY, dataZ, show = 1, savefile = 0, filename = None):
         """
         Function for creating 2D contour plot
         
@@ -139,7 +164,7 @@ class Plotter(object):
                 X[i, n] = dataX[n] #X maps the columns of dataZ
                 Y[i, n] = dataY[i] #Y maps the lines of dataZ
         fig, ax = plt.subplots()
-        CS = ax.contourf(X, Y, dataZ, levels= 1000)
+        CS = ax.contourf(X, Y, dataZ, levels= 100)
         #Note: Saveing MUST happen before displaying, since displaying overwrites fig
         #out of sequence ops cause a blank image to be saved instead of the generated plot
         if savefile:
@@ -148,12 +173,20 @@ class Plotter(object):
             base = os.path.split(base)[0]    #Splits directory at utils, returns project dir
             if filename != None:
                 #Create path by joininh base, data and filename
-                filename = os.path.join(self.DataDir, filename)
+                filename = os.path.join(base, "results", filename)
+                i=1
+                while os.path.isfile(filename + ".png"):
+                    filename += "(" + str(i) + ")"
+                    i+=1
                 plt.savefig(filename)
             else:
                 #if no filename specified, filename becomes current date and time
                 filename = "plot_" + datetime.now().strftime("%Y%m%d-%H_%M_%S")
-                filename = os.path.join(self.DataDir, filename)
+                i=1
+                while os.path.isfile(filename + ".png"):
+                    filename += "(" + str(i) + ")"
+                    i+=1
+                filename = os.path.join(base, "results", filename)
                 plt.savefig(filename)
         if show:
             #Show the Plot
@@ -162,7 +195,6 @@ class Plotter(object):
             plt.show()
         #close all plots
         plt.close("all")
-
 
     def plot2D(self, dataX, dataY,xLab = None, yLab = None, show = 1, savefile = 0, filename = None, dataY_List = None, data_Labels = None):
         """
@@ -207,11 +239,19 @@ class Plotter(object):
             if filename != None:
                 #Create path by joining base, data and filename
                 filename = os.path.join(base, "data", filename)
+                i=1
+                while os.path.isfile(filename + ".png"):
+                    filename += "(" + str(i) + ")"
+                    i+=1
                 plt.savefig(filename)
             else:
                 #if no filename specified, filename becomes current date and time
                 filename = "plot_" + datetime.now().strftime("%Y%m%d-%H_%M_%S")
                 filename = os.path.join(base, "data", filename)
+                i=1
+                while os.path.isfile(filename + ".png"):
+                    filename += "(" + str(i) + ")"
+                    i+=1
                 plt.savefig(filename)
         if show:
             #Show the Plot
