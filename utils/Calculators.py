@@ -257,6 +257,11 @@ class Calculator(object):
         """
         delv_tot_max = 0
         size_fac_max = 0
+        try:
+            if len(isp) == 1:
+                isp = isp[0]
+        except:
+            pass
         for i in range(1,99):
             delv_tot = 0
             m_s, m_f = self.MassSplit(n, m_0, m_pl, mu, i*1e-2)

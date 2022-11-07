@@ -222,7 +222,7 @@ class GUI():
         label.grid(row = 7, column = 1)
         label = tk.Label(input_frm, textvariable = self.result[1], font= ("Arial Bold", 16))
         label.grid(row = 9, column = 1)
-        entries = self.addEntryColumn(1,1, 5, frame = input_frm)
+        entries = self.addEntryColumn(1,1, 6, frame = input_frm)
         entry = tk.Entry(input_frm, width = 30)
         entry.grid(row = 8, column = 1)
         self.entries["num Stages"] = entries[0]
@@ -336,9 +336,9 @@ class GUI():
         top_frame.pack()
         bottom_frame = tk.Frame(button_frm, borderwidth = 3)
         bottom_frame.pack()
-        button = tk.Button(top_frame, text = "Fix Isp", command = self.Range_FixIsp)
+        button = tk.Button(top_frame, text = "Fix Isp", command = self.Range_FixIsp, bg = "#81fcf4")
         button.pack(side = tk.LEFT)
-        button = tk.Button(top_frame, text = "Fix Mu", command = self.Range_FixMu)
+        button = tk.Button(top_frame, text = "Fix Mu", command = self.Range_FixMu, bg = "#81fcf4")
         button.pack(side = tk.RIGHT)
         button = tk.Button(bottom_frame, text = "Calculate", command = self.Range_Calc)
         button.pack(side = tk.RIGHT)
@@ -350,7 +350,7 @@ class GUI():
     def Range_FixMu(self):
         label = tk.Label(self.data["input Frame"], text = "Mu", font = ("Arial Bold", 16))
         label.grid(row = 7, column = 0)
-        label = tk.Label(self.data["input Frame"], text = "Isp", font = ("Arial Bold", 16))
+        label = tk.Label(self.data["input Frame"], text = "Isp Start, Isp End", font = ("Arial Bold", 16))
         label.grid(row = 8, column = 0)
         range_frame = tk.Frame(self.data["input Frame"], borderwidth = 3)
         range_frame.grid(row = 8, column = 1)
@@ -369,7 +369,7 @@ class GUI():
     def Range_FixIsp(self):
         label = tk.Label(self.data["input Frame"], text = "Isp", font = ("Arial Bold", 16))
         label.grid(row = 7, column = 0)
-        label = tk.Label(self.data["input Frame"], text = "Mu", font = ("Arial Bold", 16))
+        label = tk.Label(self.data["input Frame"], text = "Mu Start, Mu End", font = ("Arial Bold", 16))
         label.grid(row = 8, column = 0)
         range_frame = tk.Frame(self.data["input Frame"], borderwidth = 3)
         range_frame.grid(row = 8, column = 1)
@@ -385,14 +385,18 @@ class GUI():
         self.data["Range Var"] = "Mu"
     
     def Range_Calc(self):
-        n = self.entries["num Stages"].get()
-        mpl = self.entries["m_pl"].get()
         try:
             mu = self.entries["mu"].get()
             isp = -1
         except:
-            isp = self.entries["Isp"].get()
-            mu = -1
+            try:
+                isp = self.entries["Isp"].get()
+                mu = -1
+            except:
+                self.ErrorMsg("Select Fix Variable First")
+                return -1
+        n = self.entries["num Stages"].get()
+        mpl = self.entries["m_pl"].get()
         delv = self.entries["Delta V"].get()
         limit = self.entries["Limit"].get()
         size_fac = self.entries["Size Fac"].get()
@@ -401,7 +405,8 @@ class GUI():
             lower = self.entries["Range Lower"].get()
             upper = self.entries["Range Upper"].get()
         except KeyError:
-            self.ErrorMsg("Select Fixed Variable First")
+            self.ErrorMsg("Select Fix Variable First")
+            return -1
         if n == "" or isp == "" or mpl == "" or mu == "" or delv == "" or limit == "" or lower == "" or upper == "" or num_steps == "":
             self.ErrorMsg("Missing Input Arguments")
             return -1
@@ -441,6 +446,62 @@ class GUI():
         else:
             self.Range()
 
+    def Ratio(self):
+        """
+        Inputs n, m_0, isp, m_pl, mu
+        """
+        self.root.destroy()
+        Window = tk.Tk()
+        self.root = Window
+        self.result = tk.StringVar()
+        input_frm, button_frm = self.basicWindowSetup(parent = Window)
+        self.data["input Frame"] = input_frm
+        self.root.title("Mass Calculator (Range)")
+        self.root.geometry("410x380")
+        self.addLabelColumn(0, 1, ["Number of Stages", 
+                                    "Launch Mass",
+                                    "Isp, Stage 1",
+                                    "Payload Mass",
+                                    "Structure Factor",
+                                    "Result"
+                                    ], _font = ("Arial Bold", 16), frame = input_frm)
+        entries = self.addEntryColumn(1,1, 5, frame = input_frm)
+        self.entries["num Stages"] = entries[0]
+        self.entries["m"] = entries[1]
+        self.entries["Isp"] = entries[2]
+        self.entries["m_pl"] = entries[3]
+        self.entries["Mu"] = entries[4]
+        label = tk.Label(input_frm, textvariable = self.result,font = ("Arial Bold", 16))
+        label.grid(row = 6, column = 1)
+        button = tk.Button(button_frm, text = "Add later Stage ISPs", command = self.AddIsp)
+        button.pack()
+        button = tk.Button(button_frm, text = "Calculate", command = self.Ratio_Calc)
+        button.pack(side = tk.RIGHT)
+        button = tk.Button(button_frm, text = "Clear Inputs", command = self.clear)
+        button.pack(side = tk.LEFT)
+    
+    def Ratio_Calc(self):
+        n = self.entries["num Stages"].get()
+        mpl = self.entries["m_pl"].get()
+        Isp = self.entries["Isp"].get()
+        m = self.entries["m"].get()
+        mu = self.entries["Mu"].get()
+        if n == "" or mpl == "" or Isp == "" or m == "" or mu == "":
+            self.ErrorMsg("Missing Input Arguments")
+            return -1
+        try:
+            n = int(n)
+            mpl = float(mpl)
+            Isp = [float(Isp)]
+            m = float(m)
+            mu = float(mu)
+        except:
+            self.ErrorMsg("Invalid Input Argument")
+        if "Isps" in self.data:
+            for val in self.data["Isps"]:
+                Isp.append(val)
+        result = self.tools["calculator"].optimiseMassRatio(n, m, Isp, mpl, mu)["Optimal Stage Sizing Factor"]
+        self.result.set(str(round(result*100,0)) + "%" )
 
     def ErrorMsg(self, text):
         msg_box = mb.showerror(title="Error", message=text)
@@ -458,7 +519,17 @@ class GUI():
                 result.set("")
         except:
             self.result.set("")
+        temp = None
+        W_Dat = None
+        if "temp" in self.data:
+            temp = self.data["temp"]
+        if "Window Data" in self.data:
+            W_Dat = self.data["Window Data"]
         self.data = {}
+        if temp != None:
+            self.data["temp"] = temp
+        if W_Dat != None:
+            self.data["Window Data"] = W_Dat
 
     def back(self):
         self.data = {}
@@ -554,11 +625,13 @@ class GUI():
         if "masses" in self.data:
             self.entries["m0"].delete(0, tk.END)
             self.entries["m0"].insert(0, sum(self.data["masses"]))
+        if len(self.data[Key_Name]) == 0:
+            del self.data[Key_Name]
         self.activeWindow.destroy()
+
     def Fuel(self):
         self.placeholder()
-    def Ratio(self):
-        self.placeholder()
+
     def placeholder(self):
         msg_box = mb.showerror(title="Error", message="Function not yet Implemented")
     def run(self):

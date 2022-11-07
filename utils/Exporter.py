@@ -33,11 +33,11 @@ class Exporter(object):
                 print("unrecognised Input")
                 self.ExportData(data, fName, fType, fDir)
                 return 0
-        fName_Full =fName + fType
         if fDir is None:
             fName = os.path.join(self.DataDir, fName)
         else:
             fName = os.path.join(fDir, fName)
+        fName_Full = fName + fType
         i = 1
         while os.path.isfile(fName_Full):
             fName += "(" + str(i) + ")"
