@@ -17,7 +17,9 @@ def main():
     Exp = Exporter(os.path.join(base, "data"))
     Plt = Plotter(os.path.join(base, "data"))
     gui = GUI(plotter = Plt,exporter= Exp, calculator = Calc)
-    gui.run()
+    gui.run()  
+
+
     
     # #Example Calculations
 

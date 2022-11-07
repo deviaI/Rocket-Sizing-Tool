@@ -86,8 +86,10 @@ class GUI():
         isp = float(isp)
         m0 = float(m0)
         mf = float(mf)
-        result = self.tools["calculator"].Tsiolkowsky(isp, m0, mf)
-        
+        try:
+            result = self.tools["calculator"].Tsiolkowsky(isp, m0, mf)
+        except Exception as e:
+            self.ErrorMsg(str(e))
         self.result.set(str(round(result,7)) + " m/s")
 
     def delV(self):
@@ -158,10 +160,13 @@ class GUI():
                 m_s.append(val)
         else:
             m_s = float(m0)
-        if len(m_f) == 0:
-            result = self.tools["calculator"].calcDelV(n, m_s,  mpl, isp)
-        else:
-            result = self.tools["calculator"].calcDelV(n, m_s, mpl, isp, m_f = m_f)
+        try:
+            if len(m_f) == 0:
+                result = self.tools["calculator"].calcDelV(n, m_s,  mpl, isp)
+            else:
+                result = self.tools["calculator"].calcDelV(n, m_s, mpl, isp, m_f = m_f)
+        except Exception as e:
+            self.ErrorMsg(str(e))
         self.result.set(str(round(result, 4)) + "m/s" + "\t")
         
     def delV_AddFuel(self):
@@ -290,10 +295,13 @@ class GUI():
             isp = [isp]
             for val in self.data["Isps"]:
                 isp.append(val)
-        if size_fac != -1:
-            result = self.tools["calculator"].calcPoint(n, isp, mpl, mu, delv, limit, size_fac = size_fac)
-        else:
-            result = self.tools["calculator"].calcPoint(n, isp, mpl, mu, delv, limit)
+        try:
+            if size_fac != -1:
+                result = self.tools["calculator"].calcPoint(n, isp, mpl, mu, delv, limit, size_fac = size_fac)
+            else:
+                result = self.tools["calculator"].calcPoint(n, isp, mpl, mu, delv, limit)
+        except Exception as e:
+            self.ErrorMsg(str(e))
         if result[0] > 1e50:
             for result in self.result:
                 result.set("Calculation Diverged")
@@ -431,10 +439,13 @@ class GUI():
             isp = (lower, upper)
         elif self.data["Range Var"] == "Mu":
             mu = (lower, upper)
-        if size_fac != -1:
-            result = self.tools["calculator"].calcRange(n, self.data["Range Var"], isp, mpl, mu, delv, limit, num_steps, size_fac = size_fac)
-        else:
-            result = self.tools["calculator"].calcRange(n, self.data["Range Var"], isp, mpl, mu, delv, limit, num_steps)
+        try:
+            if size_fac != -1:
+                result = self.tools["calculator"].calcRange(n, self.data["Range Var"], isp, mpl, mu, delv, limit, num_steps, size_fac = size_fac)
+            else:
+                result = self.tools["calculator"].calcRange(n, self.data["Range Var"], isp, mpl, mu, delv, limit, num_steps)
+        except Exception as e:
+            self.ErrorMsg(str(e))
         self.tools["plotter"].plot2D(dataX = result[1], dataY = result[0], yLab = "Mass", xLab = self.data["Range Var"], show = 1, savefile = 0)
         self.tools["plotter"].plot2D(dataX = result[1], dataY = result[2], yLab = "Optimal Rel. Stage Sizing", xLab = self.data["Range Var"], show =1, savefile = 0)
         answer = mb.askquestion("Mass Calculator (Range)", "Save generated data and plots ?")
@@ -500,8 +511,150 @@ class GUI():
         if "Isps" in self.data:
             for val in self.data["Isps"]:
                 Isp.append(val)
-        result = self.tools["calculator"].optimiseMassRatio(n, m, Isp, mpl, mu)["Optimal Stage Sizing Factor"]
+        try:
+            result = self.tools["calculator"].optimiseMassRatio(n, m, Isp, mpl, mu)["Optimal Stage Sizing Factor"]
+        except Exception as e:
+            self.ErrorMsg(str(e))
         self.result.set(str(round(result*100,0)) + "%" )
+
+    def Fuel(self):
+        """
+        n, isp, m_pl, mu = 0.12, delv = 9000, limit = 1e6
+        size_fac: relative stage to stage mass
+                        If not given, it is calculated to be optimal
+            mix_rat: Mass mixture ratio O/F 
+            dens: density of propelant [dens Oxidzer, dens Fuel]
+            fueltype: fuel type. If handed, mix_rat and dens are taken from typical values
+                    Recognised Values: HydroLox, KeroLox, MethaLox
+                    // if both fueltype and mix_rat are handed, the specified mixture ratio will be used
+        """
+        self.root.destroy()
+        Window = tk.Tk()
+        self.root = Window
+        self.result = tk.StringVar()
+        input_frm, button_frm = self.basicWindowSetup(parent = Window)
+        self.data["input Frame"] = input_frm
+        self.root.title("Mass Calculator (Range)")
+        self.root.geometry("410x500")
+        self.addLabelColumn(0, 1, ["Number of Stages", 
+                                    "Isp, Stage 1",
+                                    "Payload Mass",
+                                    "Structure Factor",
+                                    "Target Delta V",
+                                    "Stage Rel. Mass",
+                                    "Convergence Limit",
+                                    "Mixture Ratio",
+                                    "Densities (Ox, Fu)",
+                                    "Fueltype",
+                                    "Oxidiser",
+                                    "Fuel",
+                                    "Total"
+                                    ], _font = ("Arial Bold", 16), frame = input_frm)
+        dens_frame = tk.Frame(input_frm, borderwidth= 3)
+        entry = tk.Entry(dens_frame, width = 15)
+        entry.grid(row = 0, column = 0)
+        self.entries["Density Ox"] = entry
+        entry = tk.Entry(dens_frame, width = 15)
+        entry.grid(row = 0, column = 1)
+        self.entries["Density Fu"] = entry
+        dens_frame.grid(row = 9, column = 1)
+
+        entries = self.addEntryColumn(1,1, 8, frame = input_frm)
+        self.entries["num Stages"] = entries[0]
+        self.entries["Isp"] = entries[1]
+        self.entries["m_pl"] = entries[2]
+        self.entries["Mu"] = entries[3]
+        self.entries["Delta V"] = entries[4]
+        self.entries["Size Fac"] = entries[5]
+        self.entries["Limit"] = entries[6]
+        self.entries["Mix Ratio"] = entries[7]
+
+
+
+        entries = self.addEntryColumn(1, 10, 1, frame = input_frm)
+        self.entries["Fueltype"] = entries[0]
+
+        self.entries["Mix Ratio"].insert(0,"Optional")
+        self.entries["Density Ox"].insert(0, "Optional")
+        self.entries["Density Fu"].insert(0, "Optional")
+        self.entries["Fueltype"].insert(0, "Optional")
+        self.entries["Size Fac"].insert(0, "Optional")
+        self.entries["Limit"].insert(0, "1000000")
+
+        self.result = [tk.StringVar(), tk.StringVar(), tk.StringVar()]
+        self.result[0].set("")
+        self.result[1].set("")
+        self.result[2].set("")
+        label = tk.Label(input_frm, textvariable=self.result[0], font = ("Arial", 16))
+        label.grid(row = 11, column = 1)
+        label = tk.Label(input_frm, textvariable=self.result[1], font = ("Arial", 16))
+        label.grid(row = 12, column = 1)
+        label = tk.Label(input_frm, textvariable=self.result[2], font = ("Arial", 16))
+        label.grid(row = 13, column = 1)
+        button = tk.Button(button_frm, text = "Add later Stage Isps", command = self.AddIsp)
+        button.pack()
+        button = tk.Button(button_frm, text = "Calculate", command = self.Fuel_Calc)
+        button.pack(side = tk.RIGHT)
+        button = tk.Button(button_frm, text = "Reset Inputs", command = self.Fuel)
+        button.pack(side = tk.LEFT)
+
+    def Fuel_Calc(self):
+
+        n = self.entries["num Stages"].get()
+        isp = self.entries["Isp"].get()
+        mpl = self.entries["m_pl"].get()
+        mu = self.entries["Mu"].get()
+        delv = self.entries["Delta V"].get()
+        limit = self.entries["Limit"].get()
+        size_fac = self.entries["Size Fac"].get()
+        Mix_Rat = self.entries["Mix Ratio"].get()
+        Dens = (self.entries["Density Ox"].get(), self.entries["Density Fu"].get())
+        fueltype = self.entries["Fueltype"].get()
+
+        if n == "" or isp == "" or mpl == "" or mu == "" or delv == "" or limit == "":
+            self.ErrorMsg("Missing Input Arguments")
+            return -1
+        if size_fac == "" or size_fac == "Optional":
+            size_fac = -1
+        if Mix_Rat == "" or Mix_Rat == "Optional":
+            Mix_Rat = -1
+        if Dens[0] == "" or Dens[1] == "" or Dens[0] == "Optional" or Dens[1] == "Optional":
+            Dens = (-1, -1)
+        if fueltype == "" or fueltype == "Optional":
+            fueltype = -1
+
+        n = int(n)
+        isp = [float(isp)]
+        mpl = float(mpl)
+        mu = float(mu)
+        delv = float(delv)
+        limit = float(limit)
+        size_fac = float(size_fac)
+        Mix_Rat = float(Mix_Rat)
+        Dens = (float(Dens[0]), float(Dens[1]))
+        if "Isps" in self.data:
+            for val in self.data["Isps"]:
+                isp.append(val)
+        if len(isp) == 1:
+            isp = isp[0]
+        try:
+            result = self.tools["calculator"].calcReqFuel(n, isp, mpl, mu, delv, limit, size_fac = size_fac, mix_rat = Mix_Rat, dens = Dens, fueltype = fueltype)
+        except Exception as e:
+            self.ErrorMsg(str(e))
+        if result[1] != -1:
+            if result[3] != -1:
+                Ox_Res = str(round(result[1],2)) + "kg, " + str(round(result[3], 2)) + "l"
+                Fu_Res = str(round(result[2],2)) + "kg, " + str(round(result[4], 2)) + "l"
+            else:
+                Ox_Res = str(round(result[1],2)) + "kg"
+                Fu_Res = str(round(result[2],2)) + "kg"
+        else:
+            Ox_Res = ""
+            Fu_Res = ""
+        Tot_Res = str(round(result[0], 2)) + "kg"
+        self.result[0].set(Ox_Res)
+        self.result[1].set(Fu_Res)
+        self.result[2].set(Tot_Res)
 
     def ErrorMsg(self, text):
         msg_box = mb.showerror(title="Error", message=text)
@@ -628,9 +781,6 @@ class GUI():
         if len(self.data[Key_Name]) == 0:
             del self.data[Key_Name]
         self.activeWindow.destroy()
-
-    def Fuel(self):
-        self.placeholder()
 
     def placeholder(self):
         msg_box = mb.showerror(title="Error", message="Function not yet Implemented")
