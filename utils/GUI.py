@@ -178,7 +178,7 @@ class GUI():
         if  num_stages <=1:
             self.ErrorMsg("Adding further ISPs is only possible if the Number of Stages is at least 2")
             return -1
-        self.ListInputWindow(Field_Name="Isp Stage ", key_Name = "Isps", num_inputs = num_stages -1)
+        self.ListInputWindow(Field_Name="Isp, Stage ", key_Name = "Isps", num_inputs = num_stages -1)
 
 
     def delV_AddFuel(self):
@@ -212,6 +212,113 @@ class GUI():
             return -1
         self.ListInputWindow(Field_Name= "Mass of Stage ", key_Name="masses", num_inputs = num_stages)
 
+    def Point(self):
+        """
+        inputs n, isp, m_pl, mu = 0.12, delv = 9000, limit = 1e6
+        opt: Size Fact.
+        """
+        self.root.destroy()
+        Window = tk.Tk()
+        self.root = Window
+        self.result = [tk.StringVar(), tk.StringVar()]
+        self.result[0].set("")
+        self.result[1].set("")
+        input_frm, button_frm = self.basicWindowSetup(parent = Window)
+        self.root.title("Delta V Calculator")
+        self.root.geometry("410x380")
+        self.addLabelColumn(0, 1, ["Number of Stages", 
+                                    "First Engine Isp",
+                                    "Payload Mass",
+                                    "Strucutal Factor",
+                                    "target delta v",
+                                    "divergence limit",
+                                    "Rocket Mass",
+                                    "Stage Rel. Mass",
+                                    "Req. tot. Prop."], _font = ("Arial Bold", 16), frame = input_frm)
+        label = tk.Label(input_frm, textvariable = self.result[0], font= ("Arial Bold", 16))
+        label.grid(row = 7, column = 1)
+        label = tk.Label(input_frm, textvariable = self.result[1], font= ("Arial Bold", 16))
+        label.grid(row = 9, column = 1)
+        entries = self.addEntryColumn(1,1, 6, frame = input_frm)
+        entry = tk.Entry(input_frm, width = 30)
+        entry.grid(row = 8, column = 1)
+        self.entries["num Stages"] = entries[0]
+        self.entries["Isp"] = entries[1]
+        self.entries["m_pl"] = entries[2]
+        self.entries["mu"] = entries[3]
+        self.entries["Delta V"] = entries[4]
+        self.entries["Limit"] = entries[5]
+        self.entries["Size Fac"] = entry
+        self.entries["Delta V"].insert(0, "9000")
+        self.entries["mu"].insert(0, "0.12")
+        self.entries["Limit"].insert(0, "1000000")
+        self.entries["Size Fac"].insert(0, "Optional")
+        button = tk.Button(button_frm, text = "Add Isp List", command = self.Point_AddIsp)
+        button.pack()
+        button = tk.Button(button_frm, text = "Calculate", command = self.Point_Calc)
+        button.pack(side = tk.RIGHT)
+        button = tk.Button(button_frm, text = "Reset Inputs", command = self.Point)
+        button.pack(side = tk.LEFT)
+        self.run()
+
+    def Point_AddIsp(self):
+        try:
+            num_stages = self.entries["num Stages"].get()
+        except KeyError:
+            self.entries = self.data["temp"]
+            num_stages = self.entries["num Stages"].get()
+        try:
+            num_stages = int(num_stages)
+        except:
+            num_stages = -1
+        if  num_stages <=1:
+            self.ErrorMsg("Adding further ISPs is only possible if the Number of Stages is at least 2")
+            return -1
+        self.ListInputWindow(Field_Name= "Isp, Stage ", key_Name="Isps", num_inputs = num_stages-1, startoffset=2)
+
+
+    def Point_Calc(self):
+        n = self.entries["num Stages"].get()
+        isp = self.entries["Isp"].get()
+        mpl = self.entries["m_pl"].get()
+        mu = self.entries["mu"].get()
+        delv = self.entries["Delta V"].get()
+        limit = self.entries["Limit"].get()
+        mu = self.entries["mu"].get()
+        size_fac = self.entries["Size Fac"].get()
+        if n == "" or isp == "" or mpl == "" or mu == "" or delv == "" or limit == "":
+            self.ErrorMsg("Missing Input Arguments")
+            return -1
+        if size_fac == "" or size_fac == "Optional":
+            size_fac = -1
+        try:
+            n = int(n)
+            isp = float(isp)
+            mpl = float(mpl)
+            mu = float(mu)
+            delv = float(delv)
+            limit = float(limit)
+            mu = float(mu)
+            size_fac = float(size_fac)
+        except:
+            self.ErrorMsg("Invalid Input")
+            return -1
+        if "Isps" in self.data:
+            isp = [isp]
+            for val in self.data["Isps"]:
+                isp.append(val)
+        if size_fac != -1:
+            result = self.tools["calculator"].calcPoint(n, isp, mpl, mu, delv, limit, size_fac = size_fac)
+        else:
+            result = self.tools["calculator"].calcPoint(n, isp, mpl, mu, delv, limit)
+        if result[0] > 1e50:
+            for result in self.result:
+                result.set("Calculation Diverged")
+        self.result[0].set(str(round(result[0], 3)) + "kg")
+        self.entries["Size Fac"].delete(0, tk.END)
+        self.entries["Size Fac"].insert(0, str(result[1]*100)+ "%")
+        self.result[1].set(str(round(sum(result[2]), 3)) + "kg")
+
     def ErrorMsg(self, text):
         msg_box = mb.showerror(title="Error", message=text)
 
@@ -223,8 +330,12 @@ class GUI():
             self.entries = self.data["temp"]
             for entry in self.entries:
                 self.entries[entry].delete(0, tk.END)
+        try:
+            for result in self.result:
+                result.set("")
+        except:
+            self.result.set("")
         self.data = {}
-        self.result.set("")
 
     def back(self):
         self.data = {}
@@ -272,7 +383,7 @@ class GUI():
             button.grid(row = 0, column = 0)
         return input_frm, button_frm
 
-    def ListInputWindow(self, Field_Name, num_inputs, key_Name = None):
+    def ListInputWindow(self, Field_Name, num_inputs, key_Name = None, startoffset = 1):
         Window = tk.Toplevel(self.root)
         self.activeWindow = Window
         window_height = 40 + num_inputs*30
@@ -281,13 +392,13 @@ class GUI():
         input_frm, button_frm = self.basicWindowSetup(parent = Window, back_button = False)
         labels = []
         for i in range(0,num_inputs):
-            labels.append(Field_Name + str(i))
+            labels.append(Field_Name + str(i+startoffset))
         self.addLabelColumn(_column = 0,startrow = 1, labels = labels, frame = input_frm, _font = ("Arial Bold", 16))
         entries = self.addEntryColumn(1, 1, num_inputs, frame = input_frm)
         self.data["temp"] = self.entries
         self.entries = {}
         for i in range(0, num_inputs):
-            key = Field_Name+str(int(i+1))
+            key = Field_Name+str(int(i+startoffset))
             self.entries[key] = entries[i]
             if key_Name in self.data:
                 self.entries[key].insert(0, self.data[key_Name][i])
@@ -322,8 +433,6 @@ class GUI():
             self.entries["m0"].insert(0, sum(self.data["masses"]))
         self.activeWindow.destroy()
 
-    def Point(self):
-        self.placeholder()
     def Range(self):
         self.placeholder()
     def Fuel(self):
