@@ -119,7 +119,7 @@ class GUI():
         self.entries["Isp"] = (entries[1])
         button = tk.Button(button_frm, text = "Add Fuel Masses", command = self.delV_AddFuel)
         button.pack()
-        button = tk.Button(button_frm, text = "Add Isps for later Stages", command = self.delV_AddIsp)
+        button = tk.Button(button_frm, text = "Add Isps for later Stages", command = self.AddIsp)
         button.pack()
         button = tk.Button(button_frm, text = "Specify List of Stage Masses", command = self.delV_AddStageMasses)
         button.pack()
@@ -164,23 +164,6 @@ class GUI():
             result = self.tools["calculator"].calcDelV(n, m_s, mpl, isp, m_f = m_f)
         self.result.set(str(round(result, 4)) + "m/s" + "\t")
         
-
-    def delV_AddIsp(self):
-        try:
-            num_stages = self.entries["num Stages"].get()
-        except KeyError:
-            self.entries = self.data["temp"]
-            num_stages = self.entries["num Stages"].get()
-        try:
-            num_stages = int(num_stages)
-        except:
-            num_stages = -1
-        if  num_stages <=1:
-            self.ErrorMsg("Adding further ISPs is only possible if the Number of Stages is at least 2")
-            return -1
-        self.ListInputWindow(Field_Name="Isp, Stage ", key_Name = "Isps", num_inputs = num_stages -1)
-
-
     def delV_AddFuel(self):
         try:
             num_stages = self.entries["num Stages"].get()
@@ -224,7 +207,7 @@ class GUI():
         self.result[0].set("")
         self.result[1].set("")
         input_frm, button_frm = self.basicWindowSetup(parent = Window)
-        self.root.title("Delta V Calculator")
+        self.root.title("Mass Calculator (Point)")
         self.root.geometry("410x380")
         self.addLabelColumn(0, 1, ["Number of Stages", 
                                     "First Engine Isp",
@@ -239,7 +222,7 @@ class GUI():
         label.grid(row = 7, column = 1)
         label = tk.Label(input_frm, textvariable = self.result[1], font= ("Arial Bold", 16))
         label.grid(row = 9, column = 1)
-        entries = self.addEntryColumn(1,1, 6, frame = input_frm)
+        entries = self.addEntryColumn(1,1, 5, frame = input_frm)
         entry = tk.Entry(input_frm, width = 30)
         entry.grid(row = 8, column = 1)
         self.entries["num Stages"] = entries[0]
@@ -253,7 +236,7 @@ class GUI():
         self.entries["mu"].insert(0, "0.12")
         self.entries["Limit"].insert(0, "1000000")
         self.entries["Size Fac"].insert(0, "Optional")
-        button = tk.Button(button_frm, text = "Add Isp List", command = self.Point_AddIsp)
+        button = tk.Button(button_frm, text = "Add Isp List", command = self.AddIsp)
         button.pack()
         button = tk.Button(button_frm, text = "Calculate", command = self.Point_Calc)
         button.pack(side = tk.RIGHT)
@@ -261,7 +244,7 @@ class GUI():
         button.pack(side = tk.LEFT)
         self.run()
 
-    def Point_AddIsp(self):
+    def AddIsp(self):
         try:
             num_stages = self.entries["num Stages"].get()
         except KeyError:
@@ -318,6 +301,146 @@ class GUI():
         self.entries["Size Fac"].delete(0, tk.END)
         self.entries["Size Fac"].insert(0, str(result[1]*100)+ "%")
         self.result[1].set(str(round(sum(result[2]), 3)) + "kg")
+
+    def Range(self):
+        """
+        inputs n, isp, m_pl, mu = 0.12, delv = 9000, limit = 1e6
+        opt: Size Fact.
+        """
+        self.root.destroy()
+        Window = tk.Tk()
+        self.root = Window
+        input_frm, button_frm = self.basicWindowSetup(parent = Window)
+        self.data["input Frame"] = input_frm
+        self.root.title("Mass Calculator (Range)")
+        self.root.geometry("410x380")
+        self.addLabelColumn(0, 1, ["Number of Stages", 
+                                    "Payload Mass",
+                                    "target delta v",
+                                    "divergence limit",
+                                    "Stage Rel. Mass",
+                                    "Number of Steps"], _font = ("Arial Bold", 16), frame = input_frm)
+        entries = self.addEntryColumn(1,1, 6, frame = input_frm)
+        self.entries["num Stages"] = entries[0]
+        self.entries["m_pl"] = entries[1]
+        self.entries["Delta V"] = entries[2]
+        self.entries["Limit"] = entries[3]
+        self.entries["Size Fac"] = entries[4]
+        self.entries["Num Steps"] = entries[5]
+
+        self.entries["Delta V"].insert(0, "9000")
+        self.entries["Limit"].insert(0, "1000000")
+        self.entries["Size Fac"].insert(0, "Optional")
+        self.entries["Num Steps"].insert(0, "100")
+        top_frame = tk.Frame(button_frm, borderwidth = 3)
+        top_frame.pack()
+        bottom_frame = tk.Frame(button_frm, borderwidth = 3)
+        bottom_frame.pack()
+        button = tk.Button(top_frame, text = "Fix Isp", command = self.Range_FixIsp)
+        button.pack(side = tk.LEFT)
+        button = tk.Button(top_frame, text = "Fix Mu", command = self.Range_FixMu)
+        button.pack(side = tk.RIGHT)
+        button = tk.Button(bottom_frame, text = "Calculate", command = self.Range_Calc)
+        button.pack(side = tk.RIGHT)
+        button = tk.Button(bottom_frame, text = "Reset Inputs", command = self.Range)
+        button.pack(side = tk.LEFT)
+        self.run()
+    
+
+    def Range_FixMu(self):
+        label = tk.Label(self.data["input Frame"], text = "Mu", font = ("Arial Bold", 16))
+        label.grid(row = 7, column = 0)
+        label = tk.Label(self.data["input Frame"], text = "Isp", font = ("Arial Bold", 16))
+        label.grid(row = 8, column = 0)
+        range_frame = tk.Frame(self.data["input Frame"], borderwidth = 3)
+        range_frame.grid(row = 8, column = 1)
+        entry = tk.Entry(self.data["input Frame"], width = 30)
+        entry.grid(row = 7, column = 1)
+        self.entries["mu"] = entry
+        entry = tk.Entry(range_frame, width = 15)
+        entry.pack(side = tk.LEFT)
+        self.entries["Range Lower"] = entry
+        entry = tk.Entry(range_frame, width = 15)
+        entry.pack(side = tk.RIGHT)
+        self.entries["Range Upper"] = entry
+        self.data["Range Var"] = "Isp"
+
+
+    def Range_FixIsp(self):
+        label = tk.Label(self.data["input Frame"], text = "Isp", font = ("Arial Bold", 16))
+        label.grid(row = 7, column = 0)
+        label = tk.Label(self.data["input Frame"], text = "Mu", font = ("Arial Bold", 16))
+        label.grid(row = 8, column = 0)
+        range_frame = tk.Frame(self.data["input Frame"], borderwidth = 3)
+        range_frame.grid(row = 8, column = 1)
+        entry = tk.Entry(self.data["input Frame"], width = 30)
+        entry.grid(row = 7, column = 1)
+        self.entries["Isp"] = entry
+        entry = tk.Entry(range_frame, width = 15)
+        entry.pack(side = tk.LEFT)
+        self.entries["Range Lower"] = entry
+        entry = tk.Entry(range_frame, width = 15)
+        entry.pack(side = tk.RIGHT)
+        self.entries["Range Upper"] = entry
+        self.data["Range Var"] = "Mu"
+    
+    def Range_Calc(self):
+        n = self.entries["num Stages"].get()
+        mpl = self.entries["m_pl"].get()
+        try:
+            mu = self.entries["mu"].get()
+            isp = -1
+        except:
+            isp = self.entries["Isp"].get()
+            mu = -1
+        delv = self.entries["Delta V"].get()
+        limit = self.entries["Limit"].get()
+        size_fac = self.entries["Size Fac"].get()
+        num_steps = self.entries["Num Steps"].get()
+        try: 
+            lower = self.entries["Range Lower"].get()
+            upper = self.entries["Range Upper"].get()
+        except KeyError:
+            self.ErrorMsg("Select Fixed Variable First")
+        if n == "" or isp == "" or mpl == "" or mu == "" or delv == "" or limit == "" or lower == "" or upper == "" or num_steps == "":
+            self.ErrorMsg("Missing Input Arguments")
+            return -1
+        if size_fac == "" or size_fac == "Optional":
+            size_fac = -1
+        try:
+            n = int(n)
+            isp = float(isp)
+            mpl = float(mpl)
+            mu = float(mu)
+            delv = float(delv)
+            limit = float(limit)
+            mu = float(mu)
+            size_fac = float(size_fac)
+            lower = float(lower)
+            upper = float(upper)
+            num_steps = int(num_steps)
+        except:
+            self.ErrorMsg("Invalid Input")
+            return -1
+        if self.data["Range Var"] == "Isp":
+            isp = (lower, upper)
+        elif self.data["Range Var"] == "Mu":
+            mu = (lower, upper)
+        if size_fac != -1:
+            result = self.tools["calculator"].calcRange(n, self.data["Range Var"], isp, mpl, mu, delv, limit, num_steps, size_fac = size_fac)
+        else:
+            result = self.tools["calculator"].calcRange(n, self.data["Range Var"], isp, mpl, mu, delv, limit, num_steps)
+        self.tools["plotter"].plot2D(dataX = result[1], dataY = result[0], yLab = "Mass", xLab = self.data["Range Var"], show = 1, savefile = 0)
+        self.tools["plotter"].plot2D(dataX = result[1], dataY = result[2], yLab = "Optimal Rel. Stage Sizing", xLab = self.data["Range Var"], show =1, savefile = 0)
+        answer = mb.askquestion("Mass Calculator (Range)", "Save generated data and plots ?")
+        if answer == "yes":
+            self.tools["plotter"].plot2D(dataX = result[1], dataY = result[0], yLab = "Mass", xLab = self.data["Range Var"], show = 0, savefile = 1)
+            self.tools["plotter"].plot2D(dataX = result[1], dataY = result[2], yLab = "Optimal Rel. Stage Sizing", xLab = self.data["Range Var"], show =0, savefile = 1)
+            self.tools["exporter"].ExportData(data = result, fType = ".csv")
+            self.Range()
+        else:
+            self.Range()
+
 
     def ErrorMsg(self, text):
         msg_box = mb.showerror(title="Error", message=text)
@@ -432,9 +555,6 @@ class GUI():
             self.entries["m0"].delete(0, tk.END)
             self.entries["m0"].insert(0, sum(self.data["masses"]))
         self.activeWindow.destroy()
-
-    def Range(self):
-        self.placeholder()
     def Fuel(self):
         self.placeholder()
     def Ratio(self):

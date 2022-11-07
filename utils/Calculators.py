@@ -173,9 +173,9 @@ class Calculator(object):
                 size_fac = self.optimiseMassRatio(n, m_0, isp, m_pl, mu)["Optimal Stage Sizing Factor"]
             m_s, m_f = self.MassSplit(n, m_0, m_pl, mu, size_fac)
             for k in range(0,n):
-                if type(isp) == list:
+                try:
                     delv_tot += self.Tsiolkowsky(isp[k], sum(m_s[k:n+1]), sum(m_s[k:n+1]) - m_f[k])
-                else:
+                except:
                     delv_tot += self.Tsiolkowsky(isp, sum(m_s[k:n+1]), sum(m_s[k:n+1]) - m_f[k])
             m_0_ = (1+(delv-delv_tot)/delv) * m_0
             if abs((m_0_-m_0)/m_0) < 0.0001:
@@ -195,6 +195,7 @@ class Calculator(object):
 
         Inputs:
             n:   Number of Stages
+            RangeVariable: "Isp" or "Mu"
             Isp: Isp of all Engines
                  OR
                  List of Isps for each Engine
@@ -208,23 +209,25 @@ class Calculator(object):
                       If not given, it is calculated to be optimal
 
         Returns:
-            np.array with column [0] containing mass and column [1] containing the corresponding Range Variable (either isp or mu)
+            np.array with column [0] containing mass, column [1] containing the corresponding Range Variable (either isp or mu) and column 3 containing the rel. stage sizing
         """
         Y = np.zeros((3, numSteps))
-        if RangeVariable == "isp":
-            if not(type(isp) == list):
-                raise TypeError("RangeVariable must be list")
-            isp = np.linspace(isp[0], isp[-1], numSteps)
+        if RangeVariable == "Isp":
+            try:
+                isp = np.linspace(isp[0], isp[-1], numSteps)
+            except TypeError:
+                raise TypeError("Range Variable must be array like")
             for i in range(0, numSteps):
                 if "size_fac" in kwargs:
                     Y[0, i], Y[2, i] = self.calcPoint(n, isp[i], m_pl, mu, delv, limit, kwargs["size_fac"])[0:2]
                 else:
                     Y[0, i], Y[2, i] = self.calcPoint(n, isp[i], m_pl, mu, delv, limit)[0:2]
                 Y[1, i] = isp[i]
-        elif RangeVariable == "mu":
-            if not(type(mu) == list):
+        elif RangeVariable == "Mu":
+            try:
+                mu = np.linspace(mu[0], mu[-1], numSteps)
+            except:
                 raise TypeError("RangeVariable must be list")
-            mu = np.linspace(mu[0], mu[-1], numSteps)
             for i in range(0, numSteps):
                 if "size_fac" in kwargs:
                     Y[0, i], Y[2, i] = self.calcPoint(n, isp, m_pl, mu[i], delv, limit, kwargs["size_fac"])[0:2]
@@ -266,7 +269,7 @@ class Calculator(object):
             for k in range(0,n):
                 try:
                     delv_tot += self.Tsiolkowsky(isp[k], sum(m_s[k:n+1]), sum(m_s[k:n+1]) - m_f[k])
-                except TypeError:
+                except:
                     delv_tot += self.Tsiolkowsky(isp, sum(m_s[k:n+1]), sum(m_s[k:n+1]) - m_f[k])
             if delv_tot > delv_tot_max:
                 delv_tot_max = delv_tot
