@@ -18,7 +18,7 @@ Launch Mass: Launch Mass of Rocket, EXCLUDING Payload Mass, in kg
 First Engine ISP: Isp of the first Engine in s
 
 
-Click Button "Add later Stage Isps" in order to specify Isps for furhter Stages after the first one
+Click Button "Add later Stage Isps" in order to specify Isps for furtherStages after the first one
 If not done, it is assumed that later stages have the same Isp as the first Engine
 
 
@@ -35,7 +35,7 @@ Determine Required launch mass to achieve given mission parameters
 
 Inputs:
 
-Number of Stages: Number of rocktet stages
+Number of Stages: Number of rocketstages
 
 First Engine Isp: Isp of first stage Engine in s
 
@@ -51,13 +51,13 @@ Stage Rel. Mass: Relative Mass between Stage n+1 and Stage n
 If not given, an optimal ratio is determined and used
 3
 Determine Required launch mass to achieve given mission parameter across a range of Isp or Mu (structural factor) Values
-Inuts:
+Inputs:
 
 Number of Stages: Number of Stages
 
 Payload Mass: Mass of Payload in kg
 
-target delta v: Delta V rocket mus achieve in m/s
+target delta v: Delta V rocket must achieve in m/s
 
 divergence Limit: Mass for which the iteration is considered diverged in kg
 
@@ -118,7 +118,7 @@ Known Fuel Values:
 
 "HydroLox": Mixture Ratio = 6 // Densities = (1140, 71)
 
-"KeroLox": Mixture Ratio = 2.3 // Densities = (1140 , 800)
+"KeroLox": Mixture Ratio = 2.3 // Densities = (1140, 800)
 
 "MethaLox": Mixture Ratio = 3.5 // Densities = (1140, 423)
 6

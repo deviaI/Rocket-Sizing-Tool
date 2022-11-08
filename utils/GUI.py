@@ -252,7 +252,7 @@ class GUI():
         self.addLabelColumn(0, 1, ["Number of Stages", 
                                     "First Engine Isp",
                                     "Payload Mass",
-                                    "Strucutal Factor",
+                                    "Structural Factor",
                                     "target delta v",
                                     "divergence limit",
                                     "Rocket Mass",
