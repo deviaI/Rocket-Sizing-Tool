@@ -41,7 +41,7 @@ class GUI():
         base = os.path.dirname(__file__)
         path = os.path.join(base,"Files", "help.png")
         self.help = tk.PhotoImage(file = path)
-        self.root.geometry("390x400")
+        self.root.geometry("390x390")
         label = tk.Label(self.root, text="Choose Calculation", font = ("comic sans", 30))
         label.grid(row=0,column=0,sticky="e")
         button = tk.Button(self.root, text = "Tsiolkowsky Calculator", command = self.Tsiolkowsky)
@@ -77,7 +77,7 @@ class GUI():
         self.result = tk.StringVar()
         self.result.set("")
         self.root.title("Tsiolkowsky Calculator")
-        self.root.geometry("410x250")
+        self.root.geometry("370x230")
         msg = ""
         i1 = self.help_msgs.index("0\n")
         i2 = self.help_msgs.index("1\n")
@@ -133,7 +133,7 @@ class GUI():
             msg += self.help_msgs[i]
         input_frm, button_frm = self.basicWindowSetup(parent = Window, help_msg = msg)
         self.root.title("Delta V Calculator")
-        self.root.geometry("410x330")
+        self.root.geometry("390x330")
         self.addLabelColumn(0, 1, ( "Num. of Stages     :",
                                     "Launch Mass :", "(excl. Payload)",
                                     "Payload Mass  :", 
@@ -248,7 +248,7 @@ class GUI():
             msg += self.help_msgs[i]
         input_frm, button_frm = self.basicWindowSetup(parent = Window, help_msg = msg)
         self.root.title("Mass Calculator (Point)")
-        self.root.geometry("410x380")
+        self.root.geometry("390x380")
         self.addLabelColumn(0, 1, ["Number of Stages", 
                                     "First Engine Isp",
                                     "Payload Mass",
@@ -361,7 +361,7 @@ class GUI():
         input_frm, button_frm = self.basicWindowSetup(parent = Window, help_msg = msg)
         self.data["input Frame"] = input_frm
         self.root.title("Mass Calculator (Range)")
-        self.root.geometry("410x380")
+        self.root.geometry("390x300")
         self.addLabelColumn(0, 1, ["Number of Stages", 
                                     "Payload Mass",
                                     "target delta v",
@@ -513,7 +513,7 @@ class GUI():
         input_frm, button_frm = self.basicWindowSetup(parent = Window, help_msg = msg)
         self.data["input Frame"] = input_frm
         self.root.title("Mass Calculator (Range)")
-        self.root.geometry("410x380")
+        self.root.geometry("390x300")
         self.addLabelColumn(0, 1, ["Number of Stages", 
                                     "Launch Mass",
                                     "Isp, Stage 1",
@@ -586,7 +586,7 @@ class GUI():
         input_frm, button_frm = self.basicWindowSetup(parent = Window, help_msg=msg)
         self.data["input Frame"] = input_frm
         self.root.title("Mass Calculator (Range)")
-        self.root.geometry("410x500")
+        self.root.geometry("390x500")
         self.addLabelColumn(0, 1, ["Number of Stages", 
                                     "Isp, Stage 1",
                                     "Payload Mass",
@@ -602,10 +602,10 @@ class GUI():
                                     "Total"
                                     ], _font = ("Arial Bold", 16), frame = input_frm)
         dens_frame = tk.Frame(input_frm, borderwidth= 3)
-        entry = tk.Entry(dens_frame, width = 15)
+        entry = tk.Entry(dens_frame, width = 10)
         entry.grid(row = 0, column = 0)
         self.entries["Density Ox"] = entry
-        entry = tk.Entry(dens_frame, width = 15)
+        entry = tk.Entry(dens_frame, width = 10)
         entry.grid(row = 0, column = 1)
         self.entries["Density Fu"] = entry
         dens_frame.grid(row = 9, column = 1)
@@ -757,14 +757,14 @@ class GUI():
         if frame == None:
             frame = self.root
         for i in range(0, num):
-            entry = tk.Entry(frame, width = 30)
+            entry = tk.Entry(frame, width = 20)
             entry.grid(row = _row, column = _column)
             entries.append(entry)
             _row += 1
         return entries
 
 
-    def basicWindowSetup(self, parent = None, back_button = True, help_msg = ""):
+    def basicWindowSetup(self, parent = None, back_button = True, help_msg = "", help_button = True):
         if parent == None:
             parent = self.root
         self.data["message"] = help_msg
@@ -772,30 +772,29 @@ class GUI():
         input_frm.pack()
         button_frm = tk.Frame(parent)
         button_frm.pack()
-        path = os.path.dirname(__file__)
-        path = os.path.join(path, "Files", "back.png")
+        path = os.path.join(self.dir, "Files", "back.png")
         back = tk.PhotoImage(file = path)
         if back_button:
             button = tk.Button(input_frm, image = back, command = self.back, borderwidth=0)
             button.image = back
             button.config(height = 40, width = 50)
             button.grid(row = 0, column = 0)
-        path = os.path.dirname(__file__)
-        path = os.path.join(path, "Files", "help.png")
-        help = tk.PhotoImage(file = path)
-        button = tk.Button(input_frm, image = help, command = self.help_msg)
-        button.image = help
-        button.config(width = 20, height = 20)
-        button.grid(row = 0, column = 1)
+        if help_button:
+            path = os.path.join(self.dir, "Files", "help.png")
+            help = tk.PhotoImage(file = path)
+            button = tk.Button(input_frm, image = help, command = self.help_msg)
+            button.image = help
+            button.config(width = 20, height = 20)
+            button.grid(row = 0, column = 1)
         return input_frm, button_frm
 
     def ListInputWindow(self, Field_Name, num_inputs, key_Name = None, startoffset = 1):
         Window = tk.Toplevel(self.root)
         self.activeWindow = Window
         window_height = 40 + num_inputs*30
-        size = "200x" + str(int(window_height))
+        size = "250x" + str(int(window_height))
         Window.geometry(size)
-        input_frm, button_frm = self.basicWindowSetup(parent = Window, back_button = False)
+        input_frm, button_frm = self.basicWindowSetup(parent = Window, back_button = False, help_button = False)
         labels = []
         for i in range(0,num_inputs):
             labels.append(Field_Name + str(i+startoffset))
