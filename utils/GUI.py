@@ -8,6 +8,7 @@ Created on  2022/11/04 12:46:18
 import tkinter as tk
 from tkinter import messagebox as mb
 import os.path
+from tkinter import filedialog as fd
 
 class GUI():
     def __init__(self, calculator, plotter, exporter):
@@ -38,8 +39,26 @@ class GUI():
         Window =  tk.Tk()
         self.root = Window
         self.root.title("Rocket Sizing Tool")
-        base = os.path.dirname(__file__)
-        path = os.path.join(base,"Files", "help.png")
+        try:
+            base = os.path.dirname(__file__)
+            path = os.path.join(base, "Files", "help.png")
+            self.help = tk.PhotoImage(file = path)
+        except:
+            try:
+                with open(".baseRST.txt") as f:
+                    base = f.readlines()[0]
+                    f.close()
+            except FileNotFoundError:
+                self.data["message"] = "Failed to load required Data. Please Navigate to the project Folder ('Rocket-Sizing-Tool') and select it"
+                self.help_msg()
+                base = fd.askdirectory()
+                base = os.path.join(base, "utils")
+                with open(".baseRST.txt", "w") as f:
+                    f.write(base)
+                    f.close()
+            path = os.path.join(base, "Files", "help.png")
+            self.help = tk.PhotoImage(file = path)
+            path = os.path.join(base, "Files", "help.png")
         self.help = tk.PhotoImage(file = path)
         self.root.geometry("390x390")
         label = tk.Label(self.root, text="Choose Calculation", font = ("comic sans", 30))
