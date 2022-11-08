@@ -1,1 +1,1 @@
-placeholder file to prevent deletion of data folder
+placeholder file to prevent deletion of data folder when otherwise empty
