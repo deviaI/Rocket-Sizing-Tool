@@ -15,6 +15,17 @@ class GUI():
         self.tools["calculator"] = calculator
         self.tools["plotter"] = plotter
         self.tools["exporter"] = exporter
+        self.dir = os.path.dirname(__file__)
+        path = os.path.join(self.dir, "Files", "HelpMessages.txt")
+        self.help_msgs = []
+        try: 
+            with open(path) as f:
+                lines = f.readlines()
+                self.help_msgs = lines
+        except FileNotFoundError:
+            for i in range(0,6):
+                self.help_msgs.append(str(i))
+                self.help_msgs.append("Error - Help File Not Found")
         self.root = 0
         self.entries = {}
         self.data = {}
@@ -27,6 +38,9 @@ class GUI():
         Window =  tk.Tk()
         self.root = Window
         self.root.title("Rocket Sizing Tool")
+        base = os.path.dirname(__file__)
+        path = os.path.join(base,"Files", "help.png")
+        self.help = tk.PhotoImage(file = path)
         self.root.geometry("390x400")
         label = tk.Label(self.root, text="Choose Calculation", font = ("comic sans", 30))
         label.grid(row=0,column=0,sticky="e")
@@ -48,6 +62,13 @@ class GUI():
         button = tk.Button(self.root, text = "Required Mission Propellant", command=self.Fuel)
         button.config(height = 2, width=35)
         button.grid(row = 6, column = 0)
+        button = tk.Button(self.root, image = self.help, command = self.help_msg)
+        button.image = self.help
+        button.config(width = 20, height = 20)
+        button.grid(row = 0, column = 1)
+        self.data["title"] = "Rocket Sizing Tool"
+        self.data["message"] = "Tool for basic sizing of Rockets, using the Ziolkowsky Equation. \n To begin a new Calculation select one of the Options"
+
     
     def Tsiolkowsky(self):
         self.root.destroy()
@@ -57,7 +78,12 @@ class GUI():
         self.result.set("")
         self.root.title("Tsiolkowsky Calculator")
         self.root.geometry("410x250")
-        input_frm, button_frm = self.basicWindowSetup()
+        msg = ""
+        i1 = self.help_msgs.index("0\n")
+        i2 = self.help_msgs.index("1\n")
+        for i in range(i1+1, i2):
+            msg += self.help_msgs[i]
+        input_frm, button_frm = self.basicWindowSetup(help_msg = msg)
         self.addLabelColumn(0, 1, ( "Isp                  :",
                                     "Starting Mass:", 
                                     "Final Mass     :",
@@ -100,8 +126,12 @@ class GUI():
         Window = tk.Tk()
         self.root = Window
         self.result = tk.StringVar()
-        self.result.set("")
-        input_frm, button_frm = self.basicWindowSetup(parent = Window)
+        msg = ""
+        i1 = self.help_msgs.index("1\n")
+        i2 = self.help_msgs.index("2\n")
+        for i in range(i1+1, i2):
+            msg += self.help_msgs[i]
+        input_frm, button_frm = self.basicWindowSetup(parent = Window, help_msg = msg)
         self.root.title("Delta V Calculator")
         self.root.geometry("410x330")
         self.addLabelColumn(0, 1, ( "Num. of Stages     :",
@@ -121,7 +151,7 @@ class GUI():
         self.entries["Isp"] = (entries[1])
         button = tk.Button(button_frm, text = "Add Fuel Masses", command = self.delV_AddFuel)
         button.pack()
-        button = tk.Button(button_frm, text = "Add Isps for later Stages", command = self.AddIsp)
+        button = tk.Button(button_frm, text = "Add later Stage Isps", command = self.AddIsp)
         button.pack()
         button = tk.Button(button_frm, text = "Specify List of Stage Masses", command = self.delV_AddStageMasses)
         button.pack()
@@ -211,7 +241,12 @@ class GUI():
         self.result = [tk.StringVar(), tk.StringVar()]
         self.result[0].set("")
         self.result[1].set("")
-        input_frm, button_frm = self.basicWindowSetup(parent = Window)
+        msg = ""
+        i1 = self.help_msgs.index("2\n")
+        i2 = self.help_msgs.index("3\n")
+        for i in range(i1+1, i2):
+            msg += self.help_msgs[i]
+        input_frm, button_frm = self.basicWindowSetup(parent = Window, help_msg = msg)
         self.root.title("Mass Calculator (Point)")
         self.root.geometry("410x380")
         self.addLabelColumn(0, 1, ["Number of Stages", 
@@ -318,7 +353,12 @@ class GUI():
         self.root.destroy()
         Window = tk.Tk()
         self.root = Window
-        input_frm, button_frm = self.basicWindowSetup(parent = Window)
+        msg = ""
+        i1 = self.help_msgs.index("3\n")
+        i2 = self.help_msgs.index("4\n")
+        for i in range(i1+1, i2):
+            msg += self.help_msgs[i]
+        input_frm, button_frm = self.basicWindowSetup(parent = Window, help_msg = msg)
         self.data["input Frame"] = input_frm
         self.root.title("Mass Calculator (Range)")
         self.root.geometry("410x380")
@@ -465,7 +505,12 @@ class GUI():
         Window = tk.Tk()
         self.root = Window
         self.result = tk.StringVar()
-        input_frm, button_frm = self.basicWindowSetup(parent = Window)
+        msg = ""
+        i1 = self.help_msgs.index("4\n")
+        i2 = self.help_msgs.index("5\n")
+        for i in range(i1+1, i2):
+            msg += self.help_msgs[i]
+        input_frm, button_frm = self.basicWindowSetup(parent = Window, help_msg = msg)
         self.data["input Frame"] = input_frm
         self.root.title("Mass Calculator (Range)")
         self.root.geometry("410x380")
@@ -482,13 +527,14 @@ class GUI():
         self.entries["Isp"] = entries[2]
         self.entries["m_pl"] = entries[3]
         self.entries["Mu"] = entries[4]
+        self.entries["Mu"].insert(0, "0.12")
         label = tk.Label(input_frm, textvariable = self.result,font = ("Arial Bold", 16))
         label.grid(row = 6, column = 1)
         button = tk.Button(button_frm, text = "Add later Stage ISPs", command = self.AddIsp)
         button.pack()
         button = tk.Button(button_frm, text = "Calculate", command = self.Ratio_Calc)
         button.pack(side = tk.RIGHT)
-        button = tk.Button(button_frm, text = "Clear Inputs", command = self.clear)
+        button = tk.Button(button_frm, text = "Reset Inputs", command = self.Ratio)
         button.pack(side = tk.LEFT)
     
     def Ratio_Calc(self):
@@ -532,7 +578,12 @@ class GUI():
         Window = tk.Tk()
         self.root = Window
         self.result = tk.StringVar()
-        input_frm, button_frm = self.basicWindowSetup(parent = Window)
+        msg = ""
+        i1 = self.help_msgs.index("5\n")
+        i2 = self.help_msgs.index("6\n")
+        for i in range(i1+1, i2):
+            msg += self.help_msgs[i]
+        input_frm, button_frm = self.basicWindowSetup(parent = Window, help_msg=msg)
         self.data["input Frame"] = input_frm
         self.root.title("Mass Calculator (Range)")
         self.root.geometry("410x500")
@@ -573,7 +624,7 @@ class GUI():
 
         entries = self.addEntryColumn(1, 10, 1, frame = input_frm)
         self.entries["Fueltype"] = entries[0]
-
+        self.entries["Mu"].insert(0, "0.12")
         self.entries["Mix Ratio"].insert(0,"Optional")
         self.entries["Density Ox"].insert(0, "Optional")
         self.entries["Density Fu"].insert(0, "Optional")
@@ -713,21 +764,29 @@ class GUI():
         return entries
 
 
-    def basicWindowSetup(self, parent = None, back_button = True):
+    def basicWindowSetup(self, parent = None, back_button = True, help_msg = ""):
         if parent == None:
             parent = self.root
+        self.data["message"] = help_msg
         input_frm = tk.Frame(parent, relief = tk.SUNKEN, borderwidth = 3)
         input_frm.pack()
         button_frm = tk.Frame(parent)
         button_frm.pack()
+        path = os.path.dirname(__file__)
+        path = os.path.join(path, "Files", "back.png")
+        back = tk.PhotoImage(file = path)
         if back_button:
-            path = os.path.dirname(__file__)
-            path = os.path.join(path, "back.png")
-            back = tk.PhotoImage(file = path)
             button = tk.Button(input_frm, image = back, command = self.back, borderwidth=0)
             button.image = back
             button.config(height = 40, width = 50)
             button.grid(row = 0, column = 0)
+        path = os.path.dirname(__file__)
+        path = os.path.join(path, "Files", "help.png")
+        help = tk.PhotoImage(file = path)
+        button = tk.Button(input_frm, image = help, command = self.help_msg)
+        button.image = help
+        button.config(width = 20, height = 20)
+        button.grid(row = 0, column = 1)
         return input_frm, button_frm
 
     def ListInputWindow(self, Field_Name, num_inputs, key_Name = None, startoffset = 1):
@@ -781,6 +840,9 @@ class GUI():
         if len(self.data[Key_Name]) == 0:
             del self.data[Key_Name]
         self.activeWindow.destroy()
+        
+    def help_msg(self):
+        mb.showinfo("Help", self.data["message"])
 
     def placeholder(self):
         msg_box = mb.showerror(title="Error", message="Function not yet Implemented")

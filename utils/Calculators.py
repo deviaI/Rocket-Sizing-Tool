@@ -322,12 +322,6 @@ class Calculator(object):
         fuelSpecs["density"]["HydroLox"] = (1140 , 71)
         fuelSpecs["density"]["KeroLox"] = (1140 , 800)
         fuelSpecs["density"]["MethaLox"] = (1140 , 423)
-<<<<<<< HEAD
-        fuelSpecs["Mix ratio"]["HydroLox"] = 6
-        fuelSpecs["Mix ratio"]["KeroLox"] = 2.3
-        fuelSpecs["Mix ratio"]["MethaLox"] = 3.5
-
-=======
         fuelSpecs["Mix Ratio"]["HydroLox"] = 6
         fuelSpecs["Mix Ratio"]["KeroLox"] = 2.3
         fuelSpecs["Mix Ratio"]["MethaLox"] = 3.5
@@ -337,7 +331,6 @@ class Calculator(object):
                 dels.append(val)
         for val in dels:
             del kwargs[val] 
->>>>>>> GUI
         if "size_fac" in kwargs:
             m_p = self.calcPoint(n, isp, m_pl, mu, delv, limit, size_fac = kwargs["size_fac"])[-1]
         else:
@@ -352,19 +345,16 @@ class Calculator(object):
         elif "mix_rat" not in kwargs:
             return m_p, -1, -1, -1, -1
         if "mix_rat" in kwargs:
-<<<<<<< HEAD
-            mix_rat = kwargs["mix"]
-=======
             mix_rat = kwargs["mix_rat"]
->>>>>>> GUI
-
+        if "dens" in kwargs:
+            dens = kwargs["dens"]
         m_o =  (m_p * mix_rat)/(1+mix_rat)
         m_f =  m_p/(1+mix_rat)
         if "dens" not in kwargs and "fueltype" not in kwargs:
             return m_p, m_o, m_f, -1, -1
         else:
-            v_o =  m_o / dens[0]
-            v_f = m_f / dens[1]
+            v_o =  (m_o / dens[0])*1000
+            v_f = (m_f / dens[1])*1000
             return m_p, m_o, m_f, v_o, v_f
 
 
