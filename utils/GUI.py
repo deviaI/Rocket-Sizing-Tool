@@ -424,6 +424,8 @@ class GUI():
         entry = tk.Entry(self.data["input Frame"], width = 30)
         entry.grid(row = 7, column = 1)
         self.entries["mu"] = entry
+        if "Isp" in self.entries:
+            del self.entries["isp"]
         entry = tk.Entry(range_frame, width = 15)
         entry.pack(side = tk.LEFT)
         self.entries["Range Lower"] = entry
@@ -443,6 +445,8 @@ class GUI():
         entry = tk.Entry(self.data["input Frame"], width = 30)
         entry.grid(row = 7, column = 1)
         self.entries["Isp"] = entry
+        if "mu" in self.entries:
+            del self.entries["mu"]
         entry = tk.Entry(range_frame, width = 15)
         entry.pack(side = tk.LEFT)
         self.entries["Range Lower"] = entry
@@ -476,6 +480,15 @@ class GUI():
             return -1
         if n == "" or isp == "" or mpl == "" or mu == "" or delv == "" or limit == "" or lower == "" or upper == "" or num_steps == "":
             self.ErrorMsg("Missing Input Arguments")
+            print(n)
+            print(isp)
+            print(mpl)
+            print(mu)
+            print(delv)
+            print(limit)
+            print(lower)
+            print(upper)
+            print(num_steps)
             return -1
         if size_fac == "" or size_fac == "Optional":
             size_fac = -1

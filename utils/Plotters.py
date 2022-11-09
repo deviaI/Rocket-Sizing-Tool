@@ -214,10 +214,10 @@ class Plotter(object):
             None
         """
         fig, ax = plt.subplots()
-        if data_Labels != None and type(data_Labels) != list:
-            data_Label = data_Labels
-        else:
+        try:
             data_Label = data_Labels[0]
+        except:
+            data_Label = data_Labels
         ax.plot(dataX, dataY, linewidth=2.0, label = data_Label)
         ax.set_xlim(dataX.min(), dataX.max())
         #ax.set_ylim(0, 1000000)
