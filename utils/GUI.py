@@ -16,17 +16,17 @@ class GUI():
         self.tools["calculator"] = calculator
         self.tools["plotter"] = plotter
         self.tools["exporter"] = exporter
-        self.dir = os.path.dirname(__file__)
-        path = os.path.join(self.dir, "Files", "HelpMessages.txt")
+        base = os.path.dirname(__file__)
+        base = os.path.split(base)[0]
+        self.filedir = os.path.join(base,"utils", "Files")
+        self.datadir = os.path.join(base, "data")
+        if not os.path.isfile(os.path.join(self.filedir, "HelpMessages.txt")):
+            self.filedir = "\\Files"
+            self.datadir = "\\Data"
         self.help_msgs = []
-        try: 
-            with open(path) as f:
-                lines = f.readlines()
-                self.help_msgs = lines
-        except FileNotFoundError:
-            for i in range(0,6):
-                self.help_msgs.append(str(i))
-                self.help_msgs.append("Error - Help File Not Found")
+        with open(os.path.join(self.filedir, "HelpMessages.txt")) as f:
+            lines = f.readlines()
+            self.help_msgs = lines
         self.root = 0
         self.entries = {}
         self.data = {}
@@ -39,27 +39,6 @@ class GUI():
         Window =  tk.Tk()
         self.root = Window
         self.root.title("Rocket Sizing Tool")
-        try:
-            base = os.path.dirname(__file__)
-            path = os.path.join(base, "Files", "help.png")
-            self.help = tk.PhotoImage(file = path)
-        except:
-            try:
-                with open(".baseRST.txt") as f:
-                    base = f.readlines()[0]
-                    f.close()
-            except FileNotFoundError:
-                self.data["message"] = "Failed to load required Data. Please Navigate to the project Folder ('Rocket-Sizing-Tool') and select it"
-                self.help_msg()
-                base = fd.askdirectory()
-                base = os.path.join(base, "utils")
-                with open(".baseRST.txt", "w") as f:
-                    f.write(base)
-                    f.close()
-            path = os.path.join(base, "Files", "help.png")
-            self.help = tk.PhotoImage(file = path)
-            path = os.path.join(base, "Files", "help.png")
-        self.help = tk.PhotoImage(file = path)
         self.root.geometry("390x390")
         label = tk.Label(self.root, text="Choose Calculation", font = ("comic sans", 30))
         label.grid(row=0,column=0,sticky="e")
@@ -81,8 +60,9 @@ class GUI():
         button = tk.Button(self.root, text = "Required Mission Propellant", command=self.Fuel)
         button.config(height = 2, width=35)
         button.grid(row = 6, column = 0)
-        button = tk.Button(self.root, image = self.help, command = self.help_msg)
-        button.image = self.help
+        helpimg = tk.PhotoImage(file = os.path.join(self.filedir, "help.png"))
+        button = tk.Button(self.root, image = helpimg, command = self.help_msg)
+        button.image = helpimg
         button.config(width = 20, height = 20)
         button.grid(row = 0, column = 1)
         self.data["title"] = "Rocket Sizing Tool"
@@ -522,9 +502,12 @@ class GUI():
         self.tools["plotter"].plot2D(dataX = result[1], dataY = result[2], yLab = "Optimal Rel. Stage Sizing", xLab = self.data["Range Var"], show =1, savefile = 0)
         answer = mb.askquestion("Mass Calculator (Range)", "Save generated data and plots ?")
         if answer == "yes":
-            self.tools["plotter"].plot2D(dataX = result[1], dataY = result[0], yLab = "Mass", xLab = self.data["Range Var"], show = 0, savefile = 1)
-            self.tools["plotter"].plot2D(dataX = result[1], dataY = result[2], yLab = "Optimal Rel. Stage Sizing", xLab = self.data["Range Var"], show =0, savefile = 1)
-            self.tools["exporter"].ExportData(data = result, fType = ".csv")
+            if not os.path.isdir(self.datadir):
+                self.ErrorMsg("Error - Could not find Data Directory \n Press 'Ok' to open File browser and select Save Location")
+                self.datadir = fd.askdirectory()
+            self.tools["plotter"].plot2D(dataX = result[1], dataY = result[0], yLab = "Mass", xLab = self.data["Range Var"], show = 0, savefile = 1, data_dir = self.datadir)
+            self.tools["plotter"].plot2D(dataX = result[1], dataY = result[2], yLab = "Optimal Rel. Stage Sizing", xLab = self.data["Range Var"], show =0, savefile = 1, data_dir = self.datadir)
+            self.tools["exporter"].ExportData(data = result, fType = ".csv", fDir = self.datadir)
             self.Range()
         else:
             self.Range()
@@ -804,16 +787,14 @@ class GUI():
         input_frm.pack()
         button_frm = tk.Frame(parent)
         button_frm.pack()
-        path = os.path.join(self.dir, "Files", "back.png")
-        back = tk.PhotoImage(file = path)
+        back = tk.PhotoImage(file = os.path.join(self.filedir, "back.png"))
         if back_button:
             button = tk.Button(input_frm, image = back, command = self.back, borderwidth=0)
             button.image = back
             button.config(height = 40, width = 50)
             button.grid(row = 0, column = 0)
         if help_button:
-            path = os.path.join(self.dir, "Files", "help.png")
-            help = tk.PhotoImage(file = path)
+            help = tk.PhotoImage(file = os.path.join(self.filedir, "help.png"))
             button = tk.Button(input_frm, image = help, command = self.help_msg)
             button.image = help
             button.config(width = 20, height = 20)

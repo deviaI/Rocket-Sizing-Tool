@@ -196,7 +196,7 @@ class Plotter(object):
         #close all plots
         plt.close("all")
 
-    def plot2D(self, dataX, dataY,xLab = None, yLab = None, show = 1, savefile = 0, filename = None, dataY_List = None, data_Labels = None):
+    def plot2D(self, dataX, dataY,xLab = None, yLab = None, show = 1, savefile = 0, filename = None, dataY_List = None, data_Labels = None, data_dir = None):
         """
         Function for creating 2D colourmap plot
         
@@ -234,11 +234,15 @@ class Plotter(object):
                 ax.plot(dataX, dataY_List[i], linewidth=2.0)
         if savefile:
             #Determine the Base directory
-            base = os.path.dirname(__file__) #File Directory (utils)
-            base = os.path.split(base)[0]    #Splits directory at utils, returns project dir
+            if data_dir == None:
+                base = os.path.dirname(__file__) #File Directory (utils)
+                base = os.path.split(base)[0]    #Splits directory at utils, returns project dir
+                data_dir = os.path.join(base, "data")
+            else:
+                data_dir = data_dir
             if filename != None:
                 #Create path by joining base, data and filename
-                filename = os.path.join(base, "data", filename)
+                filename = os.path.join(data_dir, filename)
                 i=1
                 while os.path.isfile(filename + ".png"):
                     filename += "(" + str(i) + ")"
@@ -247,7 +251,7 @@ class Plotter(object):
             else:
                 #if no filename specified, filename becomes current date and time
                 filename = "plot_" + datetime.now().strftime("%Y%m%d-%H_%M_%S")
-                filename = os.path.join(base, "data", filename)
+                filename = os.path.join(data_dir, filename)
                 i=1
                 while os.path.isfile(filename + ".png"):
                     filename += "(" + str(i) + ")"

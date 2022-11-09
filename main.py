@@ -18,11 +18,11 @@ def main():
     Exp = Exporter(os.path.join(base, "data"))
     Plt = Plotter(os.path.join(base, "data"))
     gui = GUI(plotter = Plt,exporter= Exp, calculator = Calc)
-    gui.run()  
+    gui.run()
 
 
     
-    # #Example Calculations
+    # #Example Calculations 
 
     # print(Calc.optimiseMassRatio(2, 12500, [311,343], 250, 0.1))
 
