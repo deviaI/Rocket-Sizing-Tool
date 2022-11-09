@@ -9,7 +9,7 @@ from utils.Exporter import Exporter
 from utils.Plotters import Plotter
 from utils.GUI import GUI
 import os.path
-import math
+import sys
 
 def main():
 
@@ -17,7 +17,11 @@ def main():
     Calc = Calculator()
     Exp = Exporter(os.path.join(base, "data"))
     Plt = Plotter(os.path.join(base, "data"))
-    gui = GUI(plotter = Plt,exporter= Exp, calculator = Calc)
+    if getattr(sys, 'frozen', False):
+        exe_path = os.path.dirname(sys.executable)
+    else:
+        exe_path = None
+    gui = GUI(plotter = Plt,exporter= Exp, calculator = Calc, exeDir = exe_path)
     gui.run()
 
 

@@ -11,18 +11,19 @@ import os.path
 from tkinter import filedialog as fd
 
 class GUI():
-    def __init__(self, calculator, plotter, exporter):
+    def __init__(self, calculator, plotter, exporter, exeDir = None):
         self.tools = {}
         self.tools["calculator"] = calculator
         self.tools["plotter"] = plotter
         self.tools["exporter"] = exporter
-        base = os.path.dirname(__file__)
-        base = os.path.split(base)[0]
-        self.filedir = os.path.join(base,"utils", "Files")
-        self.datadir = os.path.join(base, "data")
-        if not os.path.isfile(os.path.join(self.filedir, "HelpMessages.txt")):
-            self.filedir = "\\Files"
-            self.datadir = "\\Data"
+        if exeDir == None:
+            base = os.path.dirname(__file__)
+            base = os.path.split(base)[0]
+            self.filedir = os.path.join(base,"utils", "Files")
+            self.datadir = os.path.join(base, "data")
+        else:
+            self.filedir = os.path.join(exeDir, "Files")
+            self.datadir = os.path.join(exeDir, "Data")
         self.help_msgs = []
         with open(os.path.join(self.filedir, "HelpMessages.txt")) as f:
             lines = f.readlines()
