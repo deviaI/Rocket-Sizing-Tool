@@ -4,6 +4,7 @@
 Created on  2022/10/26 09:23:69
 @author  Devial
 '''
+
 from utils.Calculators import Calculator
 from utils.Exporter import Exporter
 from utils.Plotters import Plotter
@@ -17,12 +18,21 @@ def main():
     Calc = Calculator()
     Exp = Exporter(os.path.join(base, "data"))
     Plt = Plotter(os.path.join(base, "data"))
+    
+    
+    losses, data = Calc.calcAscent(400000, 224300, 0, 0.5, 12500, 0.7, 4.52, -85)
+    print(losses)
+    Plt.plot2D(data["x"], data["h"], "downrange", "heigh")
+    Plt.plot2D(data["x"], data["alpha"], "downrange", "alpha")
+    return 0
     if getattr(sys, 'frozen', False):
         exe_path = os.path.dirname(sys.executable)
     else:
         exe_path = None
     gui = GUI(plotter = Plt,exporter= Exp, calculator = Calc, exeDir = exe_path)
     gui.run()
+
+
 
 
     
