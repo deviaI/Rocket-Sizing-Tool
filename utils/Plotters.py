@@ -261,7 +261,10 @@ class Plotter(object):
                 plt.savefig(filename)
         if show:
             #Show the Plot
-            ax.legend()
+            try:
+                plt.legend()
+            except:
+                pass
             plt.show()
         #close all plots
         plt.close("all")

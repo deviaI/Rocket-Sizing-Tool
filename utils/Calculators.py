@@ -361,7 +361,7 @@ class Calculator(object):
     def calcAscent_Ideal_DV(self, LEOalt):
         return np.sqrt(2*9.81*(6378000-6378000**2/(6378000+LEOalt)))
 
-    def calcAscent(self, LEOalt, T, beta, C, m0, cD, A, m_dot, dt = 1e-3, h_cutoff = 100000, steer_rate = 0.0174533):
+    def calcAscent(self, LEOalt, T_Max, beta, C, m0, cD, A, m_dot, dt = 1e-3, h_cutoff = 100000, steer_rate = 0.0174533, throttle_rate = 0.4, a_lim = 100.0):
         #x = downrange distance
         #Assume trajectory with 1000m vertical ascent, then perform gravity turn to gamma = 87°
         #Then following a fligth path of h(x) = (0.25 LEOalt (x + d))^(c) + 1000
@@ -392,7 +392,9 @@ class Calculator(object):
         drag_loss = 0
         grav_loss = 0
         D_step = 0
+        T_step = T_Max
         gamma_tar = np.pi/2
+        alpha_step = 0
         ascent_data = {}
         ascent_data["h"]  = [0]
         ascent_data["x"] = [0]
@@ -407,20 +409,26 @@ class Calculator(object):
                 temp =0 
             if h_step > 1000 and h_step < 1001:
                 temp = 0
-            if h_step > 1500 and h_step < 1501:
-                temp = 0
             if h_step > 2000 and h_step < 2001:
                 temp = 0
             rho_step = 1.225 * np.exp(-h_step/H)
             if h_step > 1000 and gamma_step > 1.51844:
                 gamma_tar = 1.51844 #87°
-            alpha_step = self.calcAlpha(gamma_step, gamma_tar, T, m_step, v_step, h_step + 6378000, dt, alpha_step, steer_rate)
+            elif h_step > 1000:
+                temp = 0
+            alpha_step = self.calcAlpha(gamma_step, gamma_tar, T_step, m_step, v_step, h_step + 6378000, dt, alpha_step, steer_rate)
             D_step = rho_step*0.5*v_step**2*cD*A
-            steer_loss += 2*T*np.sin(alpha_step*0.5)**2/m_step * dt
+            steer_loss += 2*T_step*np.sin(alpha_step*0.5)**2/m_step * dt
             drag_loss += D_step/m_step * dt
             grav_loss += 9.81*np.sin(gamma_step) * dt
-            v_step += ((T*np.cos(alpha_step)-D_step)/m_step - 9.81*np.sin(gamma_step))*dt
-            a_step = ((T*np.cos(alpha_step)-D_step)/m_step - 9.81*np.sin(gamma_step))
+            v_step += ((T_step*np.cos(alpha_step)-D_step)/m_step - 9.81*np.sin(gamma_step))*dt
+            a_step = ((T_step*np.cos(alpha_step)-D_step)/m_step - 9.81*np.sin(gamma_step))
+            if a_step >= a_lim:
+                T_step -= T_Max*throttle_rate*dt
+            else:
+                T_step += T_Max*throttle_rate*dt
+            if T_step > T_Max:
+                T_step = T_Max
             h_step += v_step * np.sin(gamma_step) * dt
             x_step += abs(v_step * np.cos(gamma_step) * dt)    
             if h_step < 1000:
@@ -428,11 +436,11 @@ class Calculator(object):
                 gamma_step = np.pi/2
                 gamma_tar = np.pi/2
             else:
-                gamma_step += (T * np.sin(alpha_step)/(m_step*v_step) - 9.81/v_step*np.cos(gamma_step) + v_step/(6378000+h_step)*np.cos(gamma_step)) * dt
+                gamma_step += (T_step * np.sin(alpha_step)/(m_step*v_step) - 9.81/v_step*np.cos(gamma_step) + v_step/(6378000+h_step)*np.cos(gamma_step)) * dt
                 if gamma_step <= 1.51844 and not pass_flag:
                     x -= x_step
                     pass_flag = True
-                gamma_tar = np.arctan(C2*C*(C2*x_step + x)**(C-1))
+                gamma_tar = np.arctan(C2*C*(C2*(x_step + x))**(C-1))
             m_step += m_dot*dt
             if m_step < 0:
                 raise ArithmeticError("Not Enough Propellant")
@@ -447,28 +455,26 @@ class Calculator(object):
 
     def calcAlpha(self, gamma_0, gamma_tar, T, m, v, r, dt, alpha_0, steer_rate):
         #iteratively determine the steering angle in order to best follow the profile
-        alpha = alpha_0
-        gamma = 0
-        gamma_ = 0
-        if gamma_0 == gamma_tar:
-            return 0
-        while abs((gamma-gamma_tar)/gamma_tar) > 1e-5:
-            if v > 1e-3:
-                gamma = gamma_0 + ( T * np.sin(alpha)/(m*v) - 9.81/v*np.cos(gamma_0) + v/r*np.cos(gamma_0) ) * dt
+        try:
+            alpha = np.arcsin(m*v/T *((gamma_tar-gamma_0)/dt + np.cos(gamma_0)*(9.81/v - v/r)))
+        except RuntimeWarning:
+            if gamma_tar - gamma_0 > 0:
+                alpha = alpha_0 + steer_rate * dt
             else:
-                return 0
-            if abs(gamma - gamma_tar) > abs(gamma_ - gamma_tar):
-                alpha = - 0.1 * alpha/abs(alpha)
-                gamma_ = 0
+                alpha = alpha_0 - steer_rate * dt
+            return alpha
+        except ZeroDivisionError:
+            return alpha_0
+        if alpha > alpha_0 + steer_rate*dt:
+            alpha = alpha_0 + steer_rate * dt
+        elif alpha < alpha_0 - steer_rate*dt:
+            alpha = alpha_0 - steer_rate * dt
+        elif math.isnan(alpha):
+            if gamma_tar - gamma_0 > 0:
+                alpha = alpha_0 + steer_rate * dt
             else:
-                alpha += alpha * (gamma-gamma_tar)/gamma_tar
-                gamma_ = gamma
-            if abs(alpha-alpha_0) > abs(dt*steer_rate):
-                print("Max rate TVC deflection")
-                return alpha
-            if alpha > 0.345:
-                print("Max TVC deflection reached")
-                return 0.345
+                alpha = alpha_0 - steer_rate * dt
+            return alpha
         return alpha
 
     #//////////////////////////////////////
