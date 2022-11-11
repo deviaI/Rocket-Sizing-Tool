@@ -394,6 +394,7 @@ class Calculator(object):
         T_step = T_Max
         gamma_tar = np.pi/2
         alpha_step = 0
+        t = 0
         ascent_data = {}
         ascent_data["h"]  = [0]
         ascent_data["x"] = [0]
@@ -401,7 +402,9 @@ class Calculator(object):
         ascent_data["alpha"] = [0]
         ascent_data["v"] = [0]
         ascent_data["a"] = [0]
-
+        ascent_data["T"] = [T_step]
+        ascent_data["m"] = [m_step]
+        ascent_data["t"] = [0]
         while h_step <= h_cutoff:
             #print(h_step)
             if h_step == 0:
@@ -441,6 +444,7 @@ class Calculator(object):
                     pass_flag = True
                 gamma_tar = np.arctan(C2*C*(C2*(x_step + x))**(C-1))
             m_step += m_dot*dt
+            t += dt
             if m_step < 0:
                 raise ArithmeticError("Not Enough Propellant")
             ascent_data["h"].append(h_step)
@@ -449,6 +453,9 @@ class Calculator(object):
             ascent_data["v"].append(v_step)
             ascent_data["a"].append(a_step)
             ascent_data["alpha"].append(alpha_step)
+            ascent_data["T"].append(T_step)
+            ascent_data["m"].append(m_step)
+            ascent_data["t"].append(t)
         loss_tot = rot_loss + drag_loss + grav_loss + steer_loss
         return loss_tot, ascent_data
 

@@ -1,4 +1,3 @@
-<<<<<<< HEAD:main.py
 #!/usr/bin/env python
 '''
 # -*- coding: utf-8 -*-
@@ -27,6 +26,9 @@ def main():
     Plt.plot2D(data["x"], data["alpha"], "downrange", "alpha", savefile=1)
     Plt.plot2D(data["x"], data["v"], "downrange", "speed", savefile=1)
     Plt.plot2D(data["x"], data["a"], "downrange", "accel.", savefile=1)
+    Plt.plot2D(data["x"], data["m"], "downrange", "mass", savefile=1)
+    Plt.plot2D(data["x"], data["T"], "downrange", "Thrust", savefile=1)
+    
     return 0
 
 if __name__ == '__main__':
