@@ -5,12 +5,12 @@ Created on  2022/10/26 09:23:69
 @author  Devial
 '''
 
+# NON GUI MAIN
+
 from utils.Calculators import Calculator
 from utils.Exporter import Exporter
 from utils.Plotters import Plotter
-from utils.GUI import GUI
 import os.path
-import sys
 
 def main():
 
@@ -27,7 +27,7 @@ def main():
     Plt.plot2D(data["x"], data["v"], "downrange", "speed", savefile=1)
     Plt.plot2D(data["x"], data["a"], "downrange", "accel.", savefile=1)
     return 0
-    
+
 if __name__ == '__main__':
     
     main()
