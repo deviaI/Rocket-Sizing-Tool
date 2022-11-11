@@ -33,10 +33,8 @@ class Plotter(object):
             #Check for appropriate dimensions (Matplotlib Error message for mismtached dimensions not useful)
             raise ValueError("X and Y must have same length")
         #Plot the histogram
+        fig, ax = plt.subplots()
         plt.hist2d(self, dataX, dataY,  bins=(34,20), cmap=plt.cm.jet)
-        if show:
-            #Show the Plot
-            plt.show()
         if savefile:
             #Determine the Base directory
             if filename != None:
@@ -56,6 +54,10 @@ class Plotter(object):
                     filename += "(" + str(i) + ")"
                     i+=1
                 plt.savefig(filename)
+        if show:
+            #Show the Plot
+            ax.legend()
+            plt.show()
 
 
     def colourMap(dataX, dataY, dataZ, show = 1, savefile = 0, filename = None):
@@ -77,7 +79,6 @@ class Plotter(object):
             None
 
         """
-
         #create the plot
 
         #Take 1-D input data dataX and dataY and tranform it into 2-D grid such that the gridpoints
@@ -195,7 +196,7 @@ class Plotter(object):
         #close all plots
         plt.close("all")
 
-    def plot2D(self, dataX, dataY,xLab = None, yLab = None, show = 1, savefile = 0, filename = None, dataY_List = None):
+    def plot2D(self, dataX, dataY,xLab = None, yLab = None, show = 1, savefile = 0, filename = None, dataY_List = None, data_Labels = None, data_dir = None):
         """
         Function for creating 2D colourmap plot
         
@@ -213,7 +214,13 @@ class Plotter(object):
             None
         """
         fig, ax = plt.subplots()
-        ax.plot(dataX, dataY, linewidth=2.0)
+        try:
+            data_Label = data_Labels[0]
+        except:
+            data_Label = data_Labels
+        dataX = np.array(dataX)
+        dataY = np.array(dataY)
+        ax.plot(dataX, dataY, linewidth=2.0, label = data_Label)
         ax.set_xlim(dataX.min(), dataX.max())
         #ax.set_ylim(0, 1000000)
         if xLab != None:
@@ -224,15 +231,20 @@ class Plotter(object):
         # ax.set_yscale("log")
         ax.grid(True)
         if dataY_List != None:
-            for data in dataY_List:
-                ax.plot(dataX, data, linewidth=2.0)
+            for i in range(0, len(dataY_List)):
+                data_Label = data_Labels[i]
+                ax.plot(dataX, dataY_List[i], linewidth=2.0)
         if savefile:
             #Determine the Base directory
-            base = os.path.dirname(__file__) #File Directory (utils)
-            base = os.path.split(base)[0]    #Splits directory at utils, returns project dir
+            if data_dir == None:
+                base = os.path.dirname(__file__) #File Directory (utils)
+                base = os.path.split(base)[0]    #Splits directory at utils, returns project dir
+                data_dir = os.path.join(base, "data")
+            else:
+                data_dir = data_dir
             if filename != None:
                 #Create path by joining base, data and filename
-                filename = os.path.join(base, "data", filename)
+                filename = os.path.join(data_dir, filename)
                 i=1
                 while os.path.isfile(filename + ".png"):
                     filename += "(" + str(i) + ")"
@@ -241,7 +253,7 @@ class Plotter(object):
             else:
                 #if no filename specified, filename becomes current date and time
                 filename = "plot_" + datetime.now().strftime("%Y%m%d-%H_%M_%S")
-                filename = os.path.join(base, "data", filename)
+                filename = os.path.join(data_dir, filename)
                 i=1
                 while os.path.isfile(filename + ".png"):
                     filename += "(" + str(i) + ")"
@@ -249,6 +261,10 @@ class Plotter(object):
                 plt.savefig(filename)
         if show:
             #Show the Plot
+            try:
+                plt.legend()
+            except:
+                pass
             plt.show()
         #close all plots
         plt.close("all")

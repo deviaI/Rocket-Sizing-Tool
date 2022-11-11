@@ -1,0 +1,125 @@
+0
+Basic Tsiolkowsky Calculator: 
+Inputs:
+
+ISP: The Isp of the Engine, in seconds
+
+Starting Mass: The total System mass at the start of the burn, in kg
+
+Final Mass: The Total System Mass at the End of the burn, in kg
+1
+Delta V Calculator. Calculate achievable Delta V
+Inputs:
+
+Num. of Stages: Number of Rocket Stages
+
+Launch Mass: Launch Mass of Rocket, EXCLUDING Payload Mass, in kg
+
+First Engine ISP: Isp of the first Engine in s
+
+
+Click Button "Add later Stage Isps" in order to specify Isps for furtherStages after the first one
+If not done, it is assumed that later stages have the same Isp as the first Engine
+
+
+Click Button "Add Fuel Masses" in order to specify the mass of fuel for each Stage
+Can only be specified if a list of Stage Masses is also specified
+If not done, a structure factor of 12% is assumed for each Stage
+
+
+Click Button "Add Stage Masses" in order to specify the masses of each individual stage 
+(such that the sum of the stage masses is equal to the launch mass)
+If not done, an optimal relative stage size is determined and used
+2
+Determine Required launch mass to achieve given mission parameters
+
+Inputs:
+
+Number of Stages: Number of rocketstages
+
+First Engine Isp: Isp of first stage Engine in s
+
+Payload Mass: Mass of Payload in kg
+
+Structural Factor: (Stage Dry Mass)/(Stage Mass)
+
+target delta v: Delta V rocket must achieve in m/s
+
+divergence Limit: Mass for which the iteration is considered diverged in kg
+
+Stage Rel. Mass: Relative Mass between Stage n+1 and Stage n
+If not given, an optimal ratio is determined and used
+3
+Determine Required launch mass to achieve given mission parameter across a range of Isp or Mu (structural factor) Values
+Inputs:
+
+Number of Stages: Number of Stages
+
+Payload Mass: Mass of Payload in kg
+
+target delta v: Delta V rocket must achieve in m/s
+
+divergence Limit: Mass for which the iteration is considered diverged in kg
+
+Stage Rel. Mass: Relative Mass between Stage n+1 and Stage n
+If not given, an optimal ratio is determined and used
+
+Number of Steps: Number of discrete Steps in the Isp/Mu Range
+
+
+Click Button "Fix Isp" to specify a fixed Isp and the start and end for the Range of Mu 
+
+Click Button "Fix Mu" to specify a fixed Mu and the start and end for the Range of Isp
+
+4
+Determine Optimal Ratio of stage relative mass (Mass Stage n + 1)/(Mass Stage n) to achieve maximal delta v
+Inputs:
+
+Number of Stages: Number of Rocket Stages
+
+Launch Mass: Total Launch Mass of Rocket (incl Payload), in kg
+
+Isp, Stage 1: First Engine Isp in s
+
+Payload Mass: Mass of Payload in kg
+
+Structure Factor: Structure Factor of Rocket
+
+Click Button "Add later Stage ISPs" to specify Isps of later Stages
+If not done, they are assumed to be equal to Isp, Stage 1
+5
+Determine the Mass (and Volume) of the required Mission propellant
+Inputs:
+
+Isp, Stage 1: First Engine Isp in s
+
+Payload Mass: Mass of Payload in kg
+
+Structure Factor: Structure Factor (Stage Dry Mass)/(Stage Mass)
+
+Target Delta V: Delta V that must be achieved in m/s
+
+Stage Rel. Mass: Relative Stage Sizing, (Mass Stage n+1)/(Mass Stage n)
+If not given, the optimal value is determined and used
+
+Convergence limit: Mass at which sizing iteration is considered diverged, in kg
+
+Mixture Ratio: Mass flow Ratio Oxidiser/Fuel
+
+Densities (Ox, Fu): Density of Oxidiser and Fuel in kg/m^3
+
+Fueltype: Type of Fuel, supports "HydroLox", "KeroLox", "MethaLox"
+If Fueltype is specified, densities and mixture ratios are taken from known typical values
+
+If both Fueltype and Mixture Ratio or Fueltype and Densities are given, the specified Density/Mixture Ratio is used
+
+
+Known Fuel Values:
+
+"HydroLox": Mixture Ratio = 6 // Densities = (1140, 71)
+
+"KeroLox": Mixture Ratio = 2.3 // Densities = (1140, 800)
+
+"MethaLox": Mixture Ratio = 3.5 // Densities = (1140, 423)
+6
+Placeholder
