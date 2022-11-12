@@ -360,22 +360,22 @@ class Calculator(object):
     def calcAscent_Ideal_DV(self, LEOalt):
         return np.sqrt(2*9.81*(6378000-6378000**2/(6378000+LEOalt)))
 
-    def calcAscent(self, LEOalt, T_Max, beta, C, m0, cD, A, m_dot, dt = 1e-3, h_cutoff = 100000, steer_rate = 0.0174533, throttle_rate = 0.4, a_lim = 100.0):
+    def calcAscent(self, LEOalt, T, beta, C, m0, cDrag, A_front, propburn, dt = 1e-3, h_cutoff = 100000, mf = 0, steer_rate = 0.0174533, throttle_rate = 0.5, a_lim = 100.0):
         #x = downrange distance
         #Assume trajectory with 1000m vertical ascent, then perform gravity turn to gamma = 87°
         #Then following a fligth path of h(x) = (0.25 LEOalt (x + d))^(c) + 1000
         #With d being set such that gamma(x) = arctan(d/dx h(x)) = 87° for x = x_EndOfGravTurn
         #Thefore trajectory has Target gamma(x) = arctan(d/dx h(x)) = arctan(C2*C*(C2*(x-d))^(C-1))
         #Assumes constant maximal Thrust (for now)
-
+        n=0
         C2 = 0.25*LEOalt
         H = 6700
         pass_flag = False
         gamma = np.pi/2
         x = 1e-4
         dx = 10
-        while abs(gamma - 1.51844) > 1e-5:
-            while gamma > 1.51844:
+        while abs(gamma - 1.5184364) > 1e-5:
+            while gamma > 1.5184364:
                 gamma = np.arctan(C2*C*(C2*x)**(C-1))
                 x+=dx
             x -= 2*dx
@@ -383,7 +383,32 @@ class Calculator(object):
             gamma = np.arctan(C2*C*(C2*x)**(C-1))
         rot_loss = - 0.464*np.cos(beta)
         x_step = 0
-        m_step = m0
+        try:
+            m_step = m0[n]
+        except:
+            m_step = m0
+        try:
+            m_cutoff = mf[n]
+        except:
+            m_cutoff = mf
+        try:
+            m_dot = propburn[n]
+        except:
+            m_dot = propburn
+        try:
+            cD = cDrag[n]
+        except:
+            cD = cDrag
+        try:
+            A = A_front[n]
+        except:
+            A = A_front
+        try:
+            T_Step = T[n]
+            T_Max = T[n]
+        except:
+            T_Step = T
+            T_Max = T
         v_step = 0
         gamma_step = np.pi/2
         h_step = 0
@@ -391,7 +416,7 @@ class Calculator(object):
         drag_loss = 0
         grav_loss = 0
         D_step = 0
-        T_step = T_Max
+
         gamma_tar = np.pi/2
         alpha_step = 0
         t = 0
@@ -405,6 +430,7 @@ class Calculator(object):
         ascent_data["T"] = [T_step]
         ascent_data["m"] = [m_step]
         ascent_data["t"] = [0]
+        
         while h_step <= h_cutoff:
             #print(h_step)
             if h_step == 0:
@@ -414,8 +440,8 @@ class Calculator(object):
             if h_step > 2000 and h_step < 2001:
                 temp = 0
             rho_step = 1.225 * np.exp(-h_step/H)
-            if h_step > 1000 and gamma_step > 1.51844:
-                gamma_tar = 1.51844 #87°
+            if h_step > 1000 and gamma_step > 1.5184364:
+                gamma_tar = 1.5184364 #87°
             elif h_step > 1000:
                 temp = 0
             alpha_step = self.calcAlpha(gamma_step, gamma_tar, T_step, m_step, v_step, h_step + 6378000, dt, alpha_step, steer_rate)
@@ -439,14 +465,28 @@ class Calculator(object):
                 gamma_tar = np.pi/2
             else:
                 gamma_step += (T_step * np.sin(alpha_step)/(m_step*v_step) - 9.81/v_step*np.cos(gamma_step) + v_step/(6378000+h_step)*np.cos(gamma_step)) * dt
-                if gamma_step <= 1.51844 and not pass_flag:
+                if gamma_step <= 1.5184364 and not pass_flag:
                     x -= x_step
                     pass_flag = True
                 gamma_tar = np.arctan(C2*C*(C2*(x_step + x))**(C-1))
             m_step += m_dot*dt
             t += dt
-            if m_step < 0:
-                raise ArithmeticError("Not Enough Propellant")
+            if m_step < m_cutoff:
+                n += 1
+                try:
+                    m_step = m0[n]
+                    T_step = 0
+                    T_Max = T[n]
+                    m_dot = propburn[n]
+                    try:
+                        A = A_front[n]
+                        cD = cDrag[n]
+                    except:
+                        pass
+                    print("Stage Seperation at" +  str(h_step))
+                except:
+                    print("Out of Stage Fuel//End of Ascent")
+                    h_cutoff = 0
             ascent_data["h"].append(h_step)
             ascent_data["x"].append(x_step)
             ascent_data["D"].append(D_step)
