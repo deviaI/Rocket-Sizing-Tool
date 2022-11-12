@@ -20,8 +20,8 @@ def main():
     Plt = Plotter(os.path.join(base, "data"))
     
     
-    losses, data = Calc.calcAscent(400000, 224300, 0, 0.5, 12500, 0.7, 4.52, -85)
-    print(losses)
+    data = Calc.calcAscent(400000, 224300, 0, 0.5, 12500, 0.7, 4.52, -85)
+    print(data["loss_tot"])
     Plt.plot2D(data["x"], data["h"], "downrange", "height", savefile=1)
     Plt.plot2D(data["x"], data["alpha"], "downrange", "alpha", savefile=1)
     Plt.plot2D(data["x"], data["v"], "downrange", "speed", savefile=1)

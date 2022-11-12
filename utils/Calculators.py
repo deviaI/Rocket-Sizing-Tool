@@ -6,6 +6,7 @@ Created on Thu Oct 20 10:25:30 2022
 """
 
 import math
+
 import numpy as np
 
 
@@ -361,18 +362,57 @@ class Calculator(object):
         return np.sqrt(2*9.81*(6378000-6378000**2/(6378000+LEOalt)))
 
     def calcAscent(self, LEOalt, T, beta, C, m0, cDrag, A_front, propburn, dt = 1e-3, h_cutoff = 100000, mf = 0, steer_rate = 0.0174533, throttle_rate = 0.5, a_lim = 100.0):
+        """
+        Calculate the Ascent Portion of a Launch Vehicle, based on a target trajectory of the form h(x) = (0.25 LEOalt (x))^(c), c = 0..1 starting 
+        The LV will ascend vertically for 1km, proceed to initiate a gravity turn by 3° and then start attempting to follow the target launch trajectory
+        The LV will continue ascending until reaching either the cutoff altitude or the cutoff mass
+        The LV data can be provided in array like format, to allow for mid ascent staging
+
+        Inputs:
+            LEOalt: Altitude of Target LEO, affects the target flight path (higher LEOalt = steeper ascent)
+            T: Maximal Thrust, or array like of Maximal Thrusts per stage
+            beta: latitude of launch site
+            C: constant "c" in target launch trajectory
+            m0: Start mass, or array like of start masses per stage
+            cDrag: Drag coefficient, or array like of drag coefficients per stage. Can be provided as value, if equal for all stages
+            A_front: Frontal LV area, or array like of frontal LV area per stage. Can be provided as value, if equal for all stages
+            propburn: mass flow rate, or array like of mass flow rates per stage
+            dt: time step. Default = 1e-3
+            h_cutoff: cutoff altitude. Default = 100000
+            mf: cutoff mass. Default = 0
+            steer_rate: maximum TVC deflection rate. Default = 0.0174533 (1° per second)
+            throttle_rate: maximum Throttle up/down rate. Default = 0.5 (50% per second)
+            a_lim: maximum accelration. Default = 100 m/s^2 (approx. 10g)
+        
+        Returns:
+            dictionary of ascent data for each time step with entries:
+                "t": Time
+                "h": Height
+                "x": Downrange
+                "D": Drag
+                "alpha": Steering Angle
+                "v": Speed
+                "a": Accelration
+                "T": Thrust
+                "m": Mass
+                "q": Dynamic pressure
+                "rot_loss": Rotational Loss
+                "grav_loss": Gravitational Loss
+                "steer_loss": Steering Loss
+                "drag_loss": Drag Loss
+                "tot_loss": Total Loss
+        """
         #x = downrange distance
         #Assume trajectory with 1000m vertical ascent, then perform gravity turn to gamma = 87°
         #Then following a fligth path of h(x) = (0.25 LEOalt (x + d))^(c) + 1000
         #With d being set such that gamma(x) = arctan(d/dx h(x)) = 87° for x = x_EndOfGravTurn
         #Thefore trajectory has Target gamma(x) = arctan(d/dx h(x)) = arctan(C2*C*(C2*(x-d))^(C-1))
-        #Assumes constant maximal Thrust (for now)
         n=0
         C2 = 0.25*LEOalt
         H = 6700
         pass_flag = False
         gamma = np.pi/2
-        x = 1e-4
+        x = 1e-6 #Function not defined at x = 0, thus start "infinitessimally" close to 0
         dx = 10
         while abs(gamma - 1.5184364) > 1e-5:
             while gamma > 1.5184364:
@@ -430,7 +470,12 @@ class Calculator(object):
         ascent_data["T"] = [T_step]
         ascent_data["m"] = [m_step]
         ascent_data["t"] = [0]
-        
+        ascent_data["rot_loss"] = [0]
+        ascent_data["grav_loss"] = [0]
+        ascent_data["steer_loss"] = [0]
+        ascent_data["tot_loss"] = [0]
+        ascent_data["drag_loss"] = [0]
+        ascent_data["q"] = [0]
         while h_step <= h_cutoff:
             #print(h_step)
             if h_step == 0:
@@ -445,7 +490,8 @@ class Calculator(object):
             elif h_step > 1000:
                 temp = 0
             alpha_step = self.calcAlpha(gamma_step, gamma_tar, T_step, m_step, v_step, h_step + 6378000, dt, alpha_step, steer_rate)
-            D_step = rho_step*0.5*v_step**2*cD*A
+            q = rho_step*0.5*v_step**2
+            D_step = q*cD*A
             steer_loss += 2*T_step*np.sin(alpha_step*0.5)**2/m_step * dt
             drag_loss += D_step/m_step * dt
             grav_loss += 9.81*np.sin(gamma_step) * dt
@@ -495,9 +541,14 @@ class Calculator(object):
             ascent_data["alpha"].append(alpha_step)
             ascent_data["T"].append(T_step)
             ascent_data["m"].append(m_step)
+            ascent_data["q"].append(q)
             ascent_data["t"].append(t)
-        loss_tot = rot_loss + drag_loss + grav_loss + steer_loss
-        return loss_tot, ascent_data
+            ascent_data["rot_loss"].append(rot_loss)
+            ascent_data["grav_loss"].append(drag_loss)
+            ascent_data["steer_loss"].append(steer_loss)
+            ascent_data["drag_loss"].append(drag_loss)
+            ascent_data["tot_loss"].append(rot_loss+grav_loss+steer_loss)
+        return  ascent_data
 
     def calcAlpha(self, gamma_0, gamma_tar, T, m, v, r, dt, alpha_0, steer_rate):
         #iteratively determine the steering angle in order to best follow the profile
