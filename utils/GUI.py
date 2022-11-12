@@ -399,6 +399,7 @@ class GUI():
     
 
     def Range_FixMu(self):
+        self.root.geometry("390x360")
         label = tk.Label(self.data["input Frame"], text = "Mu", font = ("Arial Bold", 16))
         label.grid(row = 7, column = 0)
         label = tk.Label(self.data["input Frame"], text = "Isp Start, Isp End", font = ("Arial Bold", 16))
@@ -420,6 +421,7 @@ class GUI():
 
 
     def Range_FixIsp(self):
+        self.root.geometry("390x360")
         label = tk.Label(self.data["input Frame"], text = "Isp", font = ("Arial Bold", 16))
         label.grid(row = 7, column = 0)
         label = tk.Label(self.data["input Frame"], text = "Mu Start, Mu End", font = ("Arial Bold", 16))
@@ -510,9 +512,12 @@ class GUI():
                 datadir = fd.askdirectory(initialdir = self.DataDir)
             else:
                 datadir = fd.askdirectory()
-            with open(os.path.join(self.FileDir, ".datadir"), "w") as f:
-                f.write(str(datadir))
-                f.close()
+            try:
+                with open(os.path.join(self.FileDir, ".datadir"), "w") as f:
+                    f.write(str(datadir))
+                    f.close()
+            except:
+                pass
             self.tools["exporter"].setDataDir(datadir)
             self.tools["plotter"].setDataDir(datadir)
             ret = self.tools["plotter"].plot2D(dataX = result[1], dataY = result[0], yLab = "Mass", xLab = self.data["Range Var"], show = 0, savefile = 1)
