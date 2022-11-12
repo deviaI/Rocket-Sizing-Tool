@@ -13,6 +13,17 @@ class Plotter(object):
     def __init__(self, DataDir):
         self.DataDir = DataDir
 
+    def setDataDir(self, DataDir):
+        self.DataDir = DataDir
+        if not os.path.isdir(self.DataDir):
+            return -1
+
+    def verifyDataDir(self):
+        if not os.path.isdir(self.DataDir):
+            return -1
+        else:
+            return 0
+    
     def hist2D(self, dataX, dataY, show = 1, savefile = 0, filename = None):
         """
         Method for plotting 2D Histogram of Data
@@ -212,6 +223,7 @@ class Plotter(object):
 
         returns
             None
+            -1 if Data Directory can't be found
         """
         fig, ax = plt.subplots()
         try:
@@ -237,11 +249,11 @@ class Plotter(object):
         if savefile:
             #Determine the Base directory
             if data_dir == None:
-                base = os.path.dirname(__file__) #File Directory (utils)
-                base = os.path.split(base)[0]    #Splits directory at utils, returns project dir
-                data_dir = os.path.join(base, "data")
+                data_dir = self.DataDir
             else:
                 data_dir = data_dir
+            if not os.path.isdir(data_dir):
+                return -1
             if filename != None:
                 #Create path by joining base, data and filename
                 filename = os.path.join(data_dir, filename)

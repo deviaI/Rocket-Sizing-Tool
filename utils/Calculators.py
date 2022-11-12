@@ -12,10 +12,15 @@ import numpy as np
 
 class Calculator(object):
 
+    def __init__(self):
+        """
+        Calculator Module
+        All Inputs/Outputs in SI units
+        """
 
     def Tsiolkowsky(self, isp, m0, mf):
         """
-        Tsiolkowsky Equation
+        Simple Tsiolkowsky Calculator
 
         Inputs:
             Isp: Isp

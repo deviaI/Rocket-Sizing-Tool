@@ -16,7 +16,8 @@ class Exporter(object):
         self.DataDir = DataDir
 
     def ExportData(self, data, fType, fName = None, fDir = None):
-  
+        if not os.path.isdir(self.DataDir):
+            return -1
         if fName == None:
             fName = "data" + datetime.now().strftime("%Y%m%d-%H_%M_%S")
         if fType[0] != ".":
@@ -46,10 +47,21 @@ class Exporter(object):
         np.savetxt(fName_Full, data, delimiter=",")
 
     def AppendData(self, data, fName, fDir = None):
+
         if fDir is None:
             fName = os.path.join(self.DataDir, fName)
         else:
             fName = os.path.join(fDir, fName)
         with open(fName,'a') as fd:
             fd.write(data)
-    
+
+    def setDataDir(self, DataDir):
+        self.DataDir = DataDir
+        if not os.path.isdir(self.DataDir):
+            return -1
+        
+    def verifyDataDir(self):
+        if not os.path.isdir(self.DataDir):
+            return -1
+        else:
+            return 0
