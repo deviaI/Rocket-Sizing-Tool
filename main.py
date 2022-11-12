@@ -5,8 +5,6 @@ Created on  2022/10/26 09:23:69
 @author  Devial
 '''
 
-# NON GUI MAIN
-
 from utils.Calculators import Calculator
 from utils.Exporter import Exporter
 from utils.Plotters import Plotter

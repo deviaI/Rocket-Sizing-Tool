@@ -6,6 +6,7 @@ Created on Thu Oct 20 10:25:30 2022
 """
 
 import math
+
 import numpy as np
 
 
@@ -357,6 +358,229 @@ class Calculator(object):
             v_f = (m_f / dens[1])*1000
             return m_p, m_o, m_f, v_o, v_f
 
+    def calcAscent_Ideal_DV(self, LEOalt):
+        """
+        Calculate ideal ascent delta v
+
+        Inputs:
+            LEOalt: Altitude of target LEO
+        Returns:
+            Ideal ascent delta v
+        """
+        return np.sqrt(2*9.81*(6378000-6378000**2/(6378000+LEOalt)))
+
+    def calcAscent(self, LEOalt, T, beta, C, m0, cDrag, A_front, propburn, dt = 1e-3, h_cutoff = 100000, mf = 0, steer_rate = 0.0174533, throttle_rate = 0.5, a_lim = 100.0):
+        """
+        Calculate the Ascent Portion of a Launch Vehicle, based on a target trajectory of the form h(x) = (0.25 LEOalt (x))^(c), c = 0..1 starting 
+        The LV will ascend vertically for 1km, proceed to initiate a gravity turn by 3° and then start attempting to follow the target launch trajectory
+        The LV will continue ascending until reaching either the cutoff altitude or the cutoff mass
+        The LV data can be provided in array like format, to allow for mid ascent staging
+
+        Inputs:
+            LEOalt: Altitude of Target LEO, affects the target flight path (higher LEOalt = steeper ascent)
+            T: Maximal Thrust, or array like of Maximal Thrusts per stage
+            beta: latitude of launch site
+            C: constant "c" in target launch trajectory
+            m0: Start mass, or array like of start masses per stage
+            cDrag: Drag coefficient, or array like of drag coefficients per stage. Can be provided as value, if equal for all stages
+            A_front: Frontal LV area, or array like of frontal LV area per stage. Can be provided as value, if equal for all stages
+            propburn: mass flow rate, or array like of mass flow rates per stage
+            dt: time step. Default = 1e-3
+            h_cutoff: cutoff altitude. Default = 100000
+            mf: cutoff mass. Default = 0
+            steer_rate: maximum TVC deflection rate. Default = 0.0174533 (1° per second)
+            throttle_rate: maximum Throttle up/down rate. Default = 0.5 (50% per second)
+            a_lim: maximum accelration. Default = 100 m/s^2 (approx. 10g)
+        
+        Returns:
+            dictionary of ascent data for each time step with entries:
+                "t": Time
+                "h": Height
+                "x": Downrange
+                "D": Drag
+                "alpha": Steering Angle
+                "v": Speed
+                "a": Accelration
+                "T": Thrust
+                "m": Mass
+                "q": Dynamic pressure
+                "rot_loss": Rotational Loss
+                "grav_loss": Gravitational Loss
+                "steer_loss": Steering Loss
+                "drag_loss": Drag Loss
+                "tot_loss": Total Loss
+        """
+        #x = downrange distance
+        #Assume trajectory with 1000m vertical ascent, then perform gravity turn to gamma = 87°
+        #Then following a fligth path of h(x) = (0.25 LEOalt (x + d))^(c) + 1000
+        #With d being set such that gamma(x) = arctan(d/dx h(x)) = 87° for x = x_EndOfGravTurn
+        #Thefore trajectory has Target gamma(x) = arctan(d/dx h(x)) = arctan(C2*C*(C2*(x-d))^(C-1))
+        n=0
+        C2 = 0.25*LEOalt
+        H = 6700
+        pass_flag = False
+        gamma = np.pi/2
+        x = 1e-6 #Function not defined at x = 0, thus start "infinitessimally" close to 0
+        dx = 10
+        while abs(gamma - 1.5184364) > 1e-5:
+            while gamma > 1.5184364:
+                gamma = np.arctan(C2*C*(C2*x)**(C-1))
+                x+=dx
+            x -= 2*dx
+            dx *= 0.5
+            gamma = np.arctan(C2*C*(C2*x)**(C-1))
+        rot_loss = - 0.464*np.cos(beta)
+        x_step = 0
+        try:
+            m_step = m0[n]
+        except:
+            m_step = m0
+        try:
+            m_cutoff = mf[n]
+        except:
+            m_cutoff = mf
+        try:
+            m_dot = propburn[n]
+        except:
+            m_dot = propburn
+        try:
+            cD = cDrag[n]
+        except:
+            cD = cDrag
+        try:
+            A = A_front[n]
+        except:
+            A = A_front
+        try:
+            T_Step = T[n]
+            T_Max = T[n]
+        except:
+            T_Step = T
+            T_Max = T
+        v_step = 0
+        gamma_step = np.pi/2
+        h_step = 0
+        steer_loss = 0
+        drag_loss = 0
+        grav_loss = 0
+        D_step = 0
+
+        gamma_tar = np.pi/2
+        alpha_step = 0
+        t = 0
+        ascent_data = {}
+        ascent_data["h"]  = [0]
+        ascent_data["x"] = [0]
+        ascent_data["D"] = [0]
+        ascent_data["alpha"] = [0]
+        ascent_data["v"] = [0]
+        ascent_data["a"] = [0]
+        ascent_data["T"] = [T_step]
+        ascent_data["m"] = [m_step]
+        ascent_data["t"] = [0]
+        ascent_data["rot_loss"] = [0]
+        ascent_data["grav_loss"] = [0]
+        ascent_data["steer_loss"] = [0]
+        ascent_data["tot_loss"] = [0]
+        ascent_data["drag_loss"] = [0]
+        ascent_data["q"] = [0]
+        while h_step <= h_cutoff:
+            #print(h_step)
+            if h_step == 0:
+                temp =0 
+            if h_step > 1000 and h_step < 1001:
+                temp = 0
+            if h_step > 2000 and h_step < 2001:
+                temp = 0
+            rho_step = 1.225 * np.exp(-h_step/H)
+            if h_step > 1000 and gamma_step > 1.5184364:
+                gamma_tar = 1.5184364 #87°
+            elif h_step > 1000:
+                temp = 0
+            alpha_step = self.calcAlpha(gamma_step, gamma_tar, T_step, m_step, v_step, h_step + 6378000, dt, alpha_step, steer_rate)
+            q = rho_step*0.5*v_step**2
+            D_step = q*cD*A
+            steer_loss += 2*T_step*np.sin(alpha_step*0.5)**2/m_step * dt
+            drag_loss += D_step/m_step * dt
+            grav_loss += 9.81*np.sin(gamma_step) * dt
+            v_step += ((T_step*np.cos(alpha_step)-D_step)/m_step - 9.81*np.sin(gamma_step))*dt
+            a_step = ((T_step*np.cos(alpha_step)-D_step)/m_step - 9.81*np.sin(gamma_step))
+            if a_step >= a_lim:
+                T_step -= T_Max*throttle_rate*dt
+            else:
+                T_step += T_Max*throttle_rate*dt
+            if T_step > T_Max:
+                T_step = T_Max
+            h_step += v_step * np.sin(gamma_step) * dt
+            x_step += abs(v_step * np.cos(gamma_step) * dt)    
+            if h_step < 1000:
+                x_step = 0
+                gamma_step = np.pi/2
+                gamma_tar = np.pi/2
+            else:
+                gamma_step += (T_step * np.sin(alpha_step)/(m_step*v_step) - 9.81/v_step*np.cos(gamma_step) + v_step/(6378000+h_step)*np.cos(gamma_step)) * dt
+                if gamma_step <= 1.5184364 and not pass_flag:
+                    x -= x_step
+                    pass_flag = True
+                gamma_tar = np.arctan(C2*C*(C2*(x_step + x))**(C-1))
+            m_step += m_dot*dt
+            t += dt
+            if m_step < m_cutoff:
+                n += 1
+                try:
+                    m_step = m0[n]
+                    T_step = 0
+                    T_Max = T[n]
+                    m_dot = propburn[n]
+                    try:
+                        A = A_front[n]
+                        cD = cDrag[n]
+                    except:
+                        pass
+                    print("Stage Seperation at" +  str(h_step))
+                except:
+                    print("Out of Stage Fuel//End of Ascent")
+                    h_cutoff = 0
+            ascent_data["h"].append(h_step)
+            ascent_data["x"].append(x_step)
+            ascent_data["D"].append(D_step)
+            ascent_data["v"].append(v_step)
+            ascent_data["a"].append(a_step)
+            ascent_data["alpha"].append(alpha_step)
+            ascent_data["T"].append(T_step)
+            ascent_data["m"].append(m_step)
+            ascent_data["q"].append(q)
+            ascent_data["t"].append(t)
+            ascent_data["rot_loss"].append(rot_loss)
+            ascent_data["grav_loss"].append(drag_loss)
+            ascent_data["steer_loss"].append(steer_loss)
+            ascent_data["drag_loss"].append(drag_loss)
+            ascent_data["tot_loss"].append(rot_loss+grav_loss+steer_loss)
+        return  ascent_data
+
+    def calcAlpha(self, gamma_0, gamma_tar, T, m, v, r, dt, alpha_0, steer_rate):
+        #iteratively determine the steering angle in order to best follow the profile
+        try:
+            alpha = np.arcsin(m*v/T *((gamma_tar-gamma_0)/dt + np.cos(gamma_0)*(9.81/v - v/r)))
+        except RuntimeWarning:
+            if gamma_tar - gamma_0 > 0:
+                alpha = alpha_0 + steer_rate * dt
+            else:
+                alpha = alpha_0 - steer_rate * dt
+            return alpha
+        except ZeroDivisionError:
+            return alpha_0
+        if alpha > alpha_0 + steer_rate*dt:
+            alpha = alpha_0 + steer_rate * dt
+        elif alpha < alpha_0 - steer_rate*dt:
+            alpha = alpha_0 - steer_rate * dt
+        elif math.isnan(alpha):
+            if gamma_tar - gamma_0 > 0:
+                alpha = alpha_0 + steer_rate * dt
+            else:
+                alpha = alpha_0 - steer_rate * dt
+            return alpha
+        return alpha
 
     #//////////////////////////////////////
     #OBSOLETE
