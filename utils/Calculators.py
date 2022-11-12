@@ -416,6 +416,7 @@ class Calculator(object):
         #With d being set such that gamma(x) = arctan(d/dx h(x)) = 87° for x = x_EndOfGravTurn
         #Thefore trajectory has Target gamma(x) = arctan(d/dx h(x)) = arctan(C2*C*(C2*(x-d))^(C-1))
         n=0
+
         C2 = 0.25*LEOalt
         H = 6700
         pass_flag = False
@@ -424,6 +425,7 @@ class Calculator(object):
         dx = 10
         while abs(gamma - 1.5184364) > 1e-5:
             while gamma > 1.5184364:
+
                 gamma = np.arctan(C2*C*(C2*x)**(C-1))
                 x+=dx
             x -= 2*dx
@@ -431,6 +433,7 @@ class Calculator(object):
             gamma = np.arctan(C2*C*(C2*x)**(C-1))
         rot_loss = - 0.464*np.cos(beta)
         x_step = 0
+
         try:
             m_step = m0[n]
         except:
@@ -457,6 +460,7 @@ class Calculator(object):
         except:
             T_Step = T
             T_Max = T
+
         v_step = 0
         gamma_step = np.pi/2
         h_step = 0
@@ -464,10 +468,10 @@ class Calculator(object):
         drag_loss = 0
         grav_loss = 0
         D_step = 0
-
         gamma_tar = np.pi/2
         alpha_step = 0
         t = 0
+
         ascent_data = {}
         ascent_data["h"]  = [0]
         ascent_data["x"] = [0]
@@ -484,6 +488,7 @@ class Calculator(object):
         ascent_data["tot_loss"] = [0]
         ascent_data["drag_loss"] = [0]
         ascent_data["q"] = [0]
+        
         while h_step <= h_cutoff:
             #print(h_step)
             if h_step == 0:
@@ -519,11 +524,14 @@ class Calculator(object):
                 gamma_tar = np.pi/2
             else:
                 gamma_step += (T_step * np.sin(alpha_step)/(m_step*v_step) - 9.81/v_step*np.cos(gamma_step) + v_step/(6378000+h_step)*np.cos(gamma_step)) * dt
+
                 if gamma_step <= 1.5184364 and not pass_flag:
+
                     x -= x_step
                     pass_flag = True
                 gamma_tar = np.arctan(C2*C*(C2*(x_step + x))**(C-1))
             m_step += m_dot*dt
+
             t += dt
             if m_step < m_cutoff:
                 n += 1
@@ -541,6 +549,7 @@ class Calculator(object):
                 except:
                     print("Out of Stage Fuel//End of Ascent")
                     h_cutoff = 0
+
             ascent_data["h"].append(h_step)
             ascent_data["x"].append(x_step)
             ascent_data["D"].append(D_step)
