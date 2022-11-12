@@ -218,6 +218,8 @@ class Plotter(object):
             data_Label = data_Labels[0]
         except:
             data_Label = data_Labels
+        dataX = np.array(dataX)
+        dataY = np.array(dataY)
         ax.plot(dataX, dataY, linewidth=2.0, label = data_Label)
         ax.set_xlim(dataX.min(), dataX.max())
         #ax.set_ylim(0, 1000000)
@@ -259,7 +261,7 @@ class Plotter(object):
                 plt.savefig(filename)
         if show:
             #Show the Plot
-            ax.legend()
+            plt.legend()
             plt.show()
         #close all plots
         plt.close("all")
