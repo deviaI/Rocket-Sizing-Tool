@@ -359,6 +359,14 @@ class Calculator(object):
             return m_p, m_o, m_f, v_o, v_f
 
     def calcAscent_Ideal_DV(self, LEOalt):
+        """
+        Calculate ideal ascent delta v
+
+        Inputs:
+            LEOalt: Altitude of target LEO
+        Returns:
+            Ideal ascent delta v
+        """
         return np.sqrt(2*9.81*(6378000-6378000**2/(6378000+LEOalt)))
 
     def calcAscent(self, LEOalt, T, beta, C, m0, cDrag, A_front, propburn, dt = 1e-3, h_cutoff = 100000, mf = 0, steer_rate = 0.0174533, throttle_rate = 0.5, a_lim = 100.0):
