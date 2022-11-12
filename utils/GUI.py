@@ -30,7 +30,7 @@ class GUI():
             with open(os.path.join(self.FileDir, ".datadir")) as f:
                 self.DataDir = f.readlines()[0]
         except:
-            pass
+            self.DataDir = ""
         self.root = 0
         self.entries = {}
         self.data = {}
