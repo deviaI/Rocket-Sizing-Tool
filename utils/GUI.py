@@ -519,7 +519,7 @@ class GUI():
             ret += self.tools["plotter"].plot2D(dataX = result[1], dataY = result[2], yLab = "Optimal Rel. Stage Sizing", xLab = self.data["Range Var"], show =0, savefile = 1)
             ret += self.tools["exporter"].ExportData(data = result, fType = ".csv")
             if ret != 0:
-                self.ErrorMsg("Failed to save Data")
+                self.ErrorMsg("Failed to save Data in" + str(datadir))
             self.Range()
         else:
             self.Range()
