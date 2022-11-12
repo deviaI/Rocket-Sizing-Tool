@@ -222,7 +222,7 @@ class Plotter(object):
             filename: Filename. If no filename is specifified, it is set to be "plot_yyyymmdd-hh_mm_ss"
 
         returns
-            None
+            0
             -1 if Data Directory can't be found
         """
         fig, ax = plt.subplots()
@@ -277,3 +277,4 @@ class Plotter(object):
             plt.show()
         #close all plots
         plt.close("all")
+        return 0

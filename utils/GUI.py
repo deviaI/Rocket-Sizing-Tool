@@ -515,9 +515,11 @@ class GUI():
                 f.close()
             self.tools["exporter"].setDataDir(datadir)
             self.tools["plotter"].setDataDir(datadir)
-            self.tools["plotter"].plot2D(dataX = result[1], dataY = result[0], yLab = "Mass", xLab = self.data["Range Var"], show = 0, savefile = 1)
-            self.tools["plotter"].plot2D(dataX = result[1], dataY = result[2], yLab = "Optimal Rel. Stage Sizing", xLab = self.data["Range Var"], show =0, savefile = 1)
-            self.tools["exporter"].ExportData(data = result, fType = ".csv")
+            ret = self.tools["plotter"].plot2D(dataX = result[1], dataY = result[0], yLab = "Mass", xLab = self.data["Range Var"], show = 0, savefile = 1)
+            ret += self.tools["plotter"].plot2D(dataX = result[1], dataY = result[2], yLab = "Optimal Rel. Stage Sizing", xLab = self.data["Range Var"], show =0, savefile = 1)
+            ret += self.tools["exporter"].ExportData(data = result, fType = ".csv")
+            if ret != 0:
+                self.ErrorMsg("Failed to save Data")
             self.Range()
         else:
             self.Range()
