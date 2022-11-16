@@ -19,7 +19,7 @@ import os.path
 import sys
 
 def main():
-    gui = True
+    gui = False
     exe_path = None
     Calc = Calculator()
     if getattr(sys, 'frozen', False):
@@ -50,15 +50,8 @@ def main():
         gui = GUI(plotter = Plt,exporter= Exp, calculator = Calc, exeDir = exe_path)
         gui.run()
     else:
-        base = os.path.dirname(__file__)    
-        data = Calc.calcAscent(400000, 224300, 0, 0.5, 12500, 0.7, 4.5239, -85)
-        Exp = Exporter(os.path.join(base, "data"))
-        Plt = Plotter(os.path.join(base, "data"))
-        Plt.plot2D(data["x"], data["h"], "downrange", "height")
-        Plt.plot2D(data["x"], data["v"], "downrange", "speed")
-        Plt.plot2D(data["x"], data["a"], "downrange", "acceleration")
-        Plt.plot2D(data["x"], data["T"], "downrange", "Thrust")
-        Plt.plot2D(data["x"], data["alpha"], "downrange", "alpha")
+        print(Calc.calcBoosterCont(2, 2, 250, 360, 250, 1))
+        print(Calc.calcPoint(2, 360, 250))
 if __name__ == '__main__':
     
     main()

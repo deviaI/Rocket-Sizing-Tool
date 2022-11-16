@@ -111,12 +111,11 @@ class Calculator(object):
             if n > 1:
                 try:
                     if len(m) == len(m_f):
-                        for i in range(0.,n):
+                        for i in range(0, n):
                             _m_s.append(m[i])
                             _m_f.append(m_f[i])
                             _mu.append(1 - m_f[i]/m[i])
-                        _m_s.append(m_pl)
-                except:
+                except TypeError:
                     raise ValueError("m and m_f must both be arraay like with length n")
             else:
                 try:
@@ -134,10 +133,10 @@ class Calculator(object):
                     _m_s.append(m[i])
                     _m_f.append(_m_s[i] * 0.88)
                     _mu.append(0.12)
-                _m_s.append(m_pl)
             except TypeError:
                 _mu.append(0.12)
                 return self.optimiseMassRatio(n,m + m_pl, isp, m_pl, _mu)["Achieved Delta V"]
+        _m_s.append(m_pl)
         delta_v = 0
         for i in range(0,n):
             delta_v += self.Tsiolkowsky(_isp[i], sum(_m_s[i:n+1]), sum(_m_s[i:n+1]) - _m_f[i])
@@ -595,6 +594,51 @@ class Calculator(object):
                 alpha = alpha_0 - steer_rate * dt
             return alpha
         return alpha
+
+    def calcBoosterCont(self, n, n_booster, isp_booster, isp_core, m_pl, MFR, mu_booster = 0.12, mu_core = 0.12, delv = 9000, limit = 1e6, **kwargs):
+
+        #MFR = m_dot_core / m_dot_booster
+        if "range" in kwargs:
+            i_min = kwargs["range"][0]
+            i_max = kwargs["range"][1]
+        else:
+            i_max = int(100 * 1/MFR)
+            i_min = 0
+        delv_tar = delv
+        dv_CoreStages = 0
+        m_tot_min = limit
+        for i in range(i_min, i_max):
+            while True:
+                m0_core, factor, m_f = self.calcPoint(n, isp_core, m_pl, mu = mu_core, delv = delv_tar, limit = limit)
+                m0_core = self.MassSplit(n, m0_core, m_pl, mu_core, factor)[0]
+                m0_core_1 = m0_core[0]
+                m0_booster = m0_core_1 * i * 1e-2
+                mf_booster = m0_booster * mu_booster
+                m0_LV = sum(m0_core) + m0_booster * n_booster
+                mf_core = sum(m0_core) - (m0_booster - mf_booster)*MFR 
+                mf_LV = mf_booster*n_booster + mf_core
+                isp_weighted = (isp_core*(sum(m0_core)-mf_core) + isp_booster*(m0_booster-mf_booster)*n_booster)/(m0_LV-mf_LV) #Can you do this ?
+                dv_BoosterStage = self.Tsiolkowsky(isp_weighted, m0_LV, mf_LV)
+                m =  m0_core[0:n]
+                m[0] -= (m0_booster - mf_booster)*MFR 
+                m_f[0] -= (m0_booster - mf_booster)*MFR 
+                n_ = n
+                if m_f[0] <= 0:
+                    m = m[1:n]
+                    m_f = m_f[1:n]
+                    n_=n-1
+                dv_CoreStages = self.calcDelV(n_, m, m_pl, isp_core, m_f = m_f)
+                dv_tot = dv_CoreStages + dv_BoosterStage
+                if dv_tot <= 1.001 * delv and dv_tot >= 0.999 * delv:
+                    break
+                delv_tar -= dv_tot - delv
+            m_tot = sum(m0_core) + n_booster*m0_booster
+            if m_tot < m_tot_min:
+                m_tot_min = m_tot
+                m0_booster_min = m0_booster
+                m0_core_min = m0_core[0:n+1]
+                i_min = i
+        return m_tot_min, m0_booster_min, m0_core_min, i_min
 
     #//////////////////////////////////////
     #OBSOLETE
