@@ -52,9 +52,9 @@ def main():
     else:
         m, factor, fuel = Calc.calcPoint(2, 360, 250, delv = 10000)
         m, fuel = Calc.MassSplit(2, m, 250, 0.12, factor)
-        #print(Calc.calcBoosterDisc_FixedCore(360, 360, m[0:2], 2450, 250, 2, delv = 12000, m_f = fuel))
-        # print(Calc.calcBoosterCont_FixedCore(6, 360, 360, 2, m[0:2], 250, delv = 12000, m_f = fuel))
-        print(Calc.calcBoosterCont_OptimalCore(2, 2, 250, 360, 250, 1))
+        print(Calc.calcBoosterDisc_FixedCore(360, 360, m[0:2], 2450, 250, 2, delv = 12000, m_f = fuel))
+        #print(Calc.calcBoosterCont_FixedCore(6, 360, 360, 2, m[0:2], 250, delv = 12000, m_f = fuel))
+        #print(Calc.calcBoosterCont_OptimalCore(2, 2, 250, 360, 250, 1))
         #print(Calc.calcPoint(2, 360, 250))
 if __name__ == '__main__':
     

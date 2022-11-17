@@ -612,21 +612,7 @@ class Calculator(object):
                 m0_core = self.MassSplit(n, m0_core, m_pl, mu_core, factor)[0]
                 m0_core_1 = m0_core[0]
                 m0_booster = m0_core_1 * i * 1e-2
-                mf_booster = m0_booster * mu_booster
-                m0_LV = sum(m0_core) + m0_booster * n_booster
-                mf_core = sum(m0_core) - (m0_booster - mf_booster)*MFR 
-                mf_LV = mf_booster*n_booster + mf_core
-                dv_BoosterStage = self.Tsiolkowsky(isp_weighted, m0_LV, mf_LV)
-                m =  m0_core[0:n]
-                m[0] -= (m0_booster - mf_booster)*MFR 
-                m_f[0] -= (m0_booster - mf_booster)*MFR 
-                n_ = n
-                if m_f[0] <= 0:
-                    m = m[1:n]
-                    m_f = m_f[1:n]
-                    n_=n-1
-                dv_CoreStages = self.calcDelV(n_, m, m_pl, isp_core, m_f = m_f)
-                dv_tot = dv_CoreStages + dv_BoosterStage
+                dv_tot = self.calcDelV_par(n, m0_booster, mu_booster, m0_core[0:n], n_booster, m_pl, MFR, isp_weighted, isp_core, m_f = m_f)
                 if dv_tot <= 1.001 * delv and dv_tot >= 0.999 * delv:
                     break
                 delv_tar -= dv_tot - delv
@@ -657,26 +643,11 @@ class Calculator(object):
         if delv_core >= delv:
             return 0
         m0_core_1 = m0_core[0]
-        mp_core_1 = mp_core[0]
         isp_weighted = (isp_core * MFR + isp_booster*1/MFR * n_booster)/(n_booster*1/MFR+1*MFR)
         dv_tot = delv_core
         for i in range(i_min, i_max+1):
             m0_booster = m0_core_1 * i * 1e-2
-            mf_booster = m0_booster * mu_booster
-            m0_LV = sum(m0_core) + m0_booster * n_booster + m_pl
-            mf_core = sum(m0_core) + m_pl - (m0_booster - mf_booster)*MFR 
-            mf_LV = mf_booster*n_booster + mf_core
-            dv_BoosterStage = self.Tsiolkowsky(isp_weighted, m0_LV, mf_LV)
-            m =  m0_core[0:n]
-            m[0] = m0_core_1 - (m0_booster - mf_booster)*MFR 
-            mp_core[0] = mp_core_1 - (m0_booster - mf_booster)*MFR 
-            n_ = n
-            if mp_core[0] <= 0:
-                m = m[1:n]
-                mp_core = mp_core[1:n]
-                n_=n-1
-            dv_CoreStages = self.calcDelV(n_, m, m_pl, isp_core, m_f = mp_core)
-            dv_tot_ = dv_CoreStages + dv_BoosterStage
+            dv_tot_ = self.calcDelV_par(n, m0_booster, mu_booster, m0_core[0:n], n_booster, m_pl, MFR, isp_weighted, isp_core, m_f = mp_core)
             if dv_tot_ < dv_tot:
                 break
             dv_tot = dv_tot_
@@ -687,32 +658,16 @@ class Calculator(object):
 
     def calcBoosterDisc_FixedCore(self, isp_core, isp_booster, m0_core, m0_booster,m_pl, MFR, mu_core = 0.12, mu_booster = 0.12 , delv = 9000, booster_align = [2,3,4,5,6,7,8], **kwargs):
         n = len(m0_core)
-        m = m0_core[0:n]
         if "m_f" in kwargs:
             mp_core = kwargs["m_f"][0:n]
         else:
             mp_core = [val*(1-mu_core) for val in m0_core]
-        mp_core_1 = mp_core[0]
         m0_core_1 = m0_core[0]
         if int(100 * 1/MFR)*m0_core_1 < m0_booster:
             raise Exception("Given MFR and Booster Mass results in Booster Burn Time exeeding Core Stage 1 Burn Time")
         for i in booster_align:
             isp_weighted = (isp_core * MFR + isp_booster*1/MFR * i)/(i*1/MFR+1*MFR)
-            mf_booster = m0_booster * mu_booster
-            m0_LV = sum(m0_core) + m0_booster * i + m_pl
-            mf_core = sum(m0_core) + m_pl - (m0_booster - mf_booster)*MFR 
-            mf_LV = mf_booster*i + mf_core
-            dv_BoosterStage = self.Tsiolkowsky(isp_weighted, m0_LV, mf_LV)
-            m =  m0_core[0:n]
-            m[0] = m0_core[0] - (m0_booster - mf_booster)*MFR 
-            mp_core[0] = mp_core_1 - (m0_booster - mf_booster)*MFR 
-            n_ = n
-            if mp_core[0] <= 0:
-                m = m[1:n]
-                mp_core = mp_core[1:n]
-                n_=n-1
-            dv_CoreStages = self.calcDelV(n_, m, m_pl, isp_core, m_f = mp_core)
-            dv_tot = dv_CoreStages + dv_BoosterStage
+            dv_tot = self.calcDelV_par(n, m0_booster, mu_booster, m0_core[0:n], i, m_pl, MFR, isp_weighted, isp_core, m_f = mp_core)
             if dv_tot >= delv:
                 return i, dv_tot
         return i, dv_tot
