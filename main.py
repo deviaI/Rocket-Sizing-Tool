@@ -1,11 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-'''
-Created on  2022/11/11 17:13:19
-@author  Devial
-'''
-
-#!/usr/bin/env python
 '''
 # -*- coding: utf-8 -*-
 Created on  2022/10/26 09:23:69
@@ -37,7 +30,7 @@ def main():
         gui.run()
         return 0
     if gui == True:
-        base = os.path.dirname(__file__)    
+        base = os.path.dirname(__file__)
         Exp = Exporter(os.path.join(base, "data"))
         Plt = Plotter(os.path.join(base, "data"))
         try:
@@ -50,9 +43,12 @@ def main():
         gui = GUI(plotter = Plt,exporter= Exp, calculator = Calc, exeDir = exe_path)
         gui.run()
     else:
-        m, factor, fuel = Calc.calcPoint(2, 360, 250, delv = 10000)
-        m, fuel = Calc.MassSplit(2, m, 250, 0.12, factor)
-        print(Calc.calcBoosterDisc_FixedCore(360, 360, m[0:2], 2450, 250, 2, delv = 12000, m_f = fuel))
+        m, factor, fuel = Calc.calcPoint(2, [320, 350], 4000, 0.12, 9500, limit = 1e9)
+        print(m)
+        m, fuel = Calc.MassSplit(2, m, 4000, 0.12, factor)
+        print(m)
+        print(fuel)
+        print(Calc.calcBoosterCont_FixedCore(6, 320, [320, 350], 1, m[0:2], 4000, 0.1, 0.12, 14000, m_f = fuel))
         #print(Calc.calcBoosterCont_FixedCore(6, 360, 360, 2, m[0:2], 250, delv = 12000, m_f = fuel))
         #print(Calc.calcBoosterCont_OptimalCore(2, 2, 250, 360, 250, 1))
         #print(Calc.calcPoint(2, 360, 250))

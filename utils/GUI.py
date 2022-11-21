@@ -71,7 +71,6 @@ class GUI():
         button.grid(row = 0, column = 1)
         self.data["title"] = "Rocket Sizing Tool"
         self.data["message"] = "Tool for basic sizing of Rockets, using the Ziolkowsky Equation. \n To begin a new Calculation select one of the Options"
-
     
     def Tsiolkowsky(self):
         self.root.destroy()
@@ -216,7 +215,6 @@ class GUI():
             self.ErrorMsg("Number of Stages must be entered first")
             return -1
         self.ListInputWindow(Field_Name = "Fuel, Stage ", num_inputs = num_stages, key_Name = "fuels")
-
     
     def delV_AddStageMasses(self):
         try:
@@ -301,7 +299,6 @@ class GUI():
             self.ErrorMsg("Adding further ISPs is only possible if the Number of Stages is at least 2")
             return -1
         self.ListInputWindow(Field_Name= "Isp, Stage ", key_Name="Isps", num_inputs = num_stages-1, startoffset=2)
-
 
     def Point_Calc(self):
         n = self.entries["num Stages"].get()
@@ -397,7 +394,6 @@ class GUI():
         button.pack(side = tk.LEFT)
         self.run()
     
-
     def Range_FixMu(self):
         self.root.geometry("390x360")
         label = tk.Label(self.data["input Frame"], text = "Mu", font = ("Arial Bold", 16))
@@ -418,7 +414,6 @@ class GUI():
         entry.pack(side = tk.RIGHT)
         self.entries["Range Upper"] = entry
         self.data["Range Var"] = "Isp"
-
 
     def Range_FixIsp(self):
         self.root.geometry("390x360")
@@ -795,7 +790,6 @@ class GUI():
             _row += 1
         return entries
 
-
     def basicWindowSetup(self, parent = None, back_button = True, help_msg = "", help_button = True):
         if parent == None:
             parent = self.root
@@ -877,5 +871,6 @@ class GUI():
 
     def placeholder(self):
         msg_box = mb.showerror(title="Error", message="Function not yet Implemented")
+    
     def run(self):
         self.root.mainloop()
