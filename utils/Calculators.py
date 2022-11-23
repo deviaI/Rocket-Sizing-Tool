@@ -142,7 +142,6 @@ class Calculator(object):
             delta_v += self.Tsiolkowsky(_isp[i], sum(_m_s[i:n+1]), sum(_m_s[i:n+1]) - _m_f[i])
         return delta_v
 
-
     def calcPoint(self, n, isp, m_pl, mu = 0.12, delv = 9000, limit = 1e6, **kwargs):
         """
         Method for returning the theoretical launch mass of a Rocket based on:
@@ -192,7 +191,6 @@ class Calculator(object):
         m_0 = m_0_
         return m_0, size_fac, m_f
 
-    
     def calcRange(self, n, RangeVariable,  isp, m_pl, mu, delv = 9000, limit = 1e6, numSteps=100, **kwargs):
         """
         Method for returning the theoretical launch mass of a Rocket based on:
@@ -242,7 +240,6 @@ class Calculator(object):
         else:
             raise Exception("Unknown RangeVariable")
         return Y
-
 
     def optimiseMassRatio(self, n, m_0, isp, m_pl, mu = 0.12):
         """
@@ -629,7 +626,7 @@ class Calculator(object):
             i_min = 1
         delv_tar = delv
         m_tot_min = limit
-        isp_weighted = (isp_core * MFR + isp_booster*1/MFR * n_booster)/(n_booster+1)
+        isp_weighted = (isp_core * MFR + isp_booster*1/MFR * n_booster)/(n_booster*1/MFR+1*MFR)
         for i in range(i_min, i_max+1):
             while True:
                 m0_core, factor, m_f = self.calcPoint(n, isp_core, m_pl, mu = mu_core, delv = delv_tar, limit = limit)
@@ -648,7 +645,6 @@ class Calculator(object):
                 i_min = i
         return m_tot_min, m0_booster_min, m0_core_min, i_min
     
-
     def calcBoosterCont_FixedCore(self, n_booster, isp_booster, isp_core, MFR, m0_core, m_pl, mu_booster = 0.12, mu_core = 0.12, delv = 9000, **kwargs):
         """
         Size boosters for a fixed core rocket
@@ -686,11 +682,15 @@ class Calculator(object):
             mp_core = kwargs["m_f"][0:n]
         else:
             mp_core = [val*(1-mu_core) for val in m0_core]
+        try:
+            isp_core_0 = isp_core[0]
+        except TypeError:
+            isp_core_0 = isp_core
         delv_core = self.calcDelV(n, m0_core, m_pl, isp_core, m_f = mp_core)
         if delv_core >= delv:
             return 0
         m0_core_1 = m0_core[0]
-        isp_weighted = (isp_core * MFR + isp_booster*1/MFR * n_booster)/(n_booster*1/MFR+1*MFR)
+        isp_weighted = (isp_core_0 * MFR + isp_booster*1/MFR * n_booster)/(n_booster*1/MFR+1*MFR)
         dv_tot = delv_core
         for i in range(i_min, i_max+1):
             m0_booster = m0_core_1 * i * 1e-2
@@ -701,7 +701,6 @@ class Calculator(object):
             if dv_tot >= delv:
                 break
         return m0_booster, i, dv_tot
-
 
     def calcBoosterDisc_FixedCore(self, isp_core, isp_booster, m0_core, m0_booster,m_pl, MFR, mu_core = 0.12, mu_booster = 0.12 , delv = 9000, booster_align = [2,3,4,5,6,7,8], **kwargs):
         """
@@ -734,10 +733,14 @@ class Calculator(object):
         else:
             mp_core = [val*(1-mu_core) for val in m0_core]
         m0_core_1 = m0_core[0]
+        try:
+            isp_core_0 = isp_core[0]
+        except TypeError:
+            isp_core_0 = isp_core
         if int(100 * 1/MFR)*m0_core_1 < m0_booster:
             raise Exception("Given MFR and Booster Mass results in Booster Burn Time exeeding Core Stage 1 Burn Time")
         for i in booster_align:
-            isp_weighted = (isp_core * MFR + isp_booster*1/MFR * i)/(i*1/MFR+1*MFR)
+            isp_weighted = (isp_core_0 * MFR + isp_booster*1/MFR * i)/(i*1/MFR+1*MFR)
             dv_tot = self.calcDelV_par(n, m0_booster, mu_booster, m0_core[0:n], i, m_pl, MFR, isp_weighted, isp_core, m_f = mp_core)
             if dv_tot >= delv:
                 return i, dv_tot
@@ -781,18 +784,20 @@ class Calculator(object):
             mp_core[0] -=  (m0_booster - mf_booster)*MFR 
             n_ = n
             if mp_core[0] <= 0:
+                try:
+                    isp_core = isp_core[1:n]
+                except TypeError:
+                    pass
                 m = m[1:n]
                 mp_core = mp_core[1:n]
                 n_=n-1
             dv_CoreStages = self.calcDelV(n_, m, m_pl, isp_core, m_f = mp_core)
             return dv_CoreStages + dv_BoosterStage
 
-
-
     #//////////////////////////////////////
     #OBSOLETE
     #//////////////////////////////////////
-    
+
     def f(self, mu, isp, m_pl, delv, limit):
         """
         Method for returning the launch mass of an SSTO based on:
@@ -895,7 +900,6 @@ class Calculator(object):
             m_0 = m_0_
         m_0 = m_0_
         return m_0/1000
-
 
     def f_threeStage(self, mu, isp_1, isp_2, isp_3, m_pl, delv, limit, **kwargs):
         """
@@ -1033,8 +1037,6 @@ class Calculator(object):
                 Y[k, 1] = isp[k]
         return Y
 
-
-            
     def TwoDAlt_2Stage(self, Mode, FixVal, size_X_Axis, X_Axis_LL, x_Axis_UL, m_pl, delv, limit, **kwargs):
         """
         Method for generating a 2D Plotable csv Data set of Launch Mass against Isp or Launch Mass against Structure Factor
