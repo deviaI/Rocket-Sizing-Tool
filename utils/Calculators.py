@@ -596,7 +596,31 @@ class Calculator(object):
         return alpha
 
     def calcBoosterCont_OptimalCore(self, n, n_booster, isp_booster, isp_core, m_pl, MFR, mu_booster = 0.12, mu_core = 0.12, delv = 9000, limit = 1e6, **kwargs):
-        #MFR = m_dot_core / m_dot_booster
+        """
+        Unstable
+        Size a rocket with boosters
+        Inputs:
+            n: Number of Stages of core rocket
+            n_booster: Number of boosters
+            isp_booster: Efficiency of boosters
+            isp_core: isp of core rocket 
+                        OR
+                      list of isps for core rocket
+            m_pl: Mass of Payload
+            MFR: Mass flow ratio (m_dot_core / m_dot_booster)
+            mu_booster: Structure Factor booster (default = 0.12)
+            mu_core: Strucutre factor core rocket (default = 0.12)
+            delv: Target delta v (default = 9000 m/s)
+            limit: Divergence limit (default = 1e6 kg)
+        optional inputs:
+            "m_f": List of fuel masses for core rocket 
+            "range": Range of mass fractions (m_booster/m_core_stage_1) [imin, imax]
+        Outputs:
+            mininum total launch mass
+            minimum booster mass
+            minimum core rocket mass
+            Mass Fraction Booster/Core Stage 1
+        """
         if "range" in kwargs:
             i_min = kwargs["range"][0]
             i_max = kwargs["range"][1]
@@ -626,7 +650,30 @@ class Calculator(object):
     
 
     def calcBoosterCont_FixedCore(self, n_booster, isp_booster, isp_core, MFR, m0_core, m_pl, mu_booster = 0.12, mu_core = 0.12, delv = 9000, **kwargs):
-      
+        """
+        Size boosters for a fixed core rocket
+        Inputs:
+            n_booster: Number of boosters
+            isp_booster: Efficiency of boosters
+            isp_core: isp of core rocket 
+                        OR
+                      list of isps for core rocket
+            m_pl: Mass of Payload
+            MFR: Mass flow ratio (m_dot_core / m_dot_booster)
+            m0_coore: List of Stage masses of core rocket (excl. payload)
+            mu_booster: Structure Factor booster (default = 0.12)
+            mu_core: Strucutre factor core rocket (default = 0.12)
+            delv: Target delta v (default = 9000 m/s)
+            limit: Divergence limit (default = 1e6 kg)
+        Optional Inputs:
+            "m_f": List of fuel masses for core rocket 
+            "range": Range of mass fractions (m_booster/m_core_stage_1) [imin, imax]
+        Outputs:
+            mininum total launch mass
+            minimum booster mass
+            minimum core rocket mass
+            Mass Fraction Booster/Core Stage 1
+        """
         #MFR = m_dot_core / m_dot_booster
         n = len(m0_core)
         if "range" in kwargs:
@@ -657,6 +704,30 @@ class Calculator(object):
 
 
     def calcBoosterDisc_FixedCore(self, isp_core, isp_booster, m0_core, m0_booster,m_pl, MFR, mu_core = 0.12, mu_booster = 0.12 , delv = 9000, booster_align = [2,3,4,5,6,7,8], **kwargs):
+        """
+        For fixed core rocket and fixed booster size, determine configuration with minimum number of boosters to reach target dv
+        Inputs:
+            n_booster: Number of boosters
+            isp_core: isp of core rocket 
+                        OR
+                      list of isps for core rocket
+            isp_booster: Efficiency of boosters
+            m0_coore: List of Stage masses of core rocket (excl. payload)
+            m0_booster: Booster mass
+            m_pl: Mass of Payload
+            MFR: Mass flow ratio (m_dot_core / m_dot_booster)
+            mu_core: Strucutre factor core rocket (default = 0.12)
+            mu_booster: Structure Factor booster (default = 0.12)
+            delv: Target delta v (default = 9000 m/s)
+            booster_allign: List of available booster alignments (default: [2,3,4,5,6,7,8])
+        Optional Inputs:
+            "m_f": List of fuel masses for core rocket 
+        Outputs:
+            mininum total launch mass
+            minimum booster mass
+            minimum core rocket mass
+            Mass Fraction Booster/Core Stage 1
+        """
         n = len(m0_core)
         if "m_f" in kwargs:
             mp_core = kwargs["m_f"][0:n]
@@ -673,6 +744,29 @@ class Calculator(object):
         return i, dv_tot
     
     def calcDelV_par(self, n, m0_booster, mu_booster, m0_core, n_booster, m_pl, MFR, isp_weighted, isp_core, mu_core = 0.12,  **kwargs):
+            """
+            Calculate deltaV of a parallel staged Rocket
+            Inputs:
+                n: Number of stages
+                m0_booster: Booster mass+
+                mu_booster: structure fator of booster
+                m0_core: List of Stage masses of core rocket (excl. payload)
+                n_booster: Number of boosters
+                m_pl: payload
+                MFR: Mass Flow Ratio (m_dot_core/m_dot_booster)
+                isp_weighted: Weighted Isp of parallel stage
+                isp_core: isp of core rocket
+                            OR
+                          List of stage Isps of core rocket
+                mu_core: strucure factor of core rocket
+            Optional Inputs:
+                "m_f": List of fuel masses for core rocket 
+            Outputs:
+                mininum total launch mass
+                minimum booster mass
+                minimum core rocket mass
+                Mass Fraction Booster/Core Stage 1
+            """
             if "m_f" in kwargs:
                 mp_core = kwargs["m_f"][0:n]
             else:
