@@ -167,7 +167,14 @@ class Calculator(object):
 
             Relative Stage Mass Factor (will be identical to input, if given as input)
         """
-
+        max_dv = 0
+        for i in range(0,n):
+            try:
+                max_dv += self.Tsiolkowsky(isp[i], 1, mu)
+            except TypeError:
+                max_dv += self.Tsiolkowsky(isp, 1, mu)
+        if max_dv <= delv:
+            raise Exception("Target Delta V unachievable")
         m_0 = 2*m_pl
         if "size_fac" in kwargs:
             size_fac = kwargs["size_fac"]
