@@ -375,7 +375,12 @@ class Calculator(object):
         Returns:
             Ideal ascent delta v
         """
-        return np.sqrt(2*9.81*(6378000-6378000**2/(6378000+LEOalt)))
+        r = 6378000 + LEOalt
+        mu_earth = 3.986e14
+        dv_ascent = 2*9.81*(6378000-6378000**2/(6378000+LEOalt))
+        dv_orbit = mu_earth*(1/r)
+        dv_total = np.sqrt(dv_ascent+dv_orbit)
+        return dv_total
 
     def calcAscent(self, LEOalt, T, beta, C, m0, cDrag, A_front, propburn, dt = 1e-3, h_cutoff = 100000, mf = 0, steer_rate = 0.0174533, throttle_rate = 0.5, a_lim = 100.0):
         """

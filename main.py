@@ -43,12 +43,28 @@ def main():
         gui = GUI(plotter = Plt,exporter= Exp, calculator = Calc, exeDir = exe_path)
         gui.run()
     else:
-        m, factor, fuel = Calc.calcPoint(2, [320, 350], 4000, 0.12, 9500, limit = 1e9)
-        print(m)
-        m, fuel = Calc.MassSplit(2, m, 4000, 0.12, factor)
-        print(m)
-        print(fuel)
-        print(Calc.calcBoosterCont_FixedCore(6, 320, [320, 350], 1, m[0:2], 4000, 0.1, 0.12, 14000, m_f = fuel))
+        n = 2
+        pl = 4000
+        dv_core = 11000
+        dv_tot = 9500
+        isp = [320, 350, 440]
+        mu_core = 0.12  	
+        mu_booster = 0.1
+        MFR = 1.5
+        m = [103466.80868422716, 45525.39582105995, 20031.17416126638, 4000]
+        m_fuel = [91050.7916421199, 40062.34832253276, 17627.433261914415]
+        m_booster = 68288.09373158992
+        print(Calc.calcAscent_Ideal_DV(393000))
+        print(Calc.calcDelV(n, m[0:n], pl, isp[0:n], m_f = m_fuel[0:n]))
+        print(Calc.calcBoosterDisc_FixedCore(isp[0:n], 320, m[0:n], m_booster, pl, MFR, mu_core, mu_booster, dv_tot, m_f = m_fuel[0:n]))
+        # print(Calc.calcAscent_Ideal_DV(250000))
+        # m, factor, fuel = Calc.calcPoint(n, isp, pl, mu_core, dv_core, limit = 1e9)
+        # print(m)
+        # m, fuel = Calc.MassSplit(n, m, pl, mu_core, factor)
+        # print(m)
+        # print(fuel)
+        # print(Calc.calcDelV(2, m[0:2], 3600, [320, 350]))
+        # print(Calc.calcBoosterCont_FixedCore(4, 320, isp, MFR, m[0:n], pl, 0.1, mu_core, dv_tot, m_f = fuel))
         #print(Calc.calcBoosterCont_FixedCore(6, 360, 360, 2, m[0:2], 250, delv = 12000, m_f = fuel))
         #print(Calc.calcBoosterCont_OptimalCore(2, 2, 250, 360, 250, 1))
         #print(Calc.calcPoint(2, 360, 250))
