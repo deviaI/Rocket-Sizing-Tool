@@ -381,6 +381,43 @@ class Calculator(object):
         dv_orbit = mu_earth*(1/r)
         dv_total = np.sqrt(dv_ascent+dv_orbit)
         return dv_total
+    def gen_ascent_path_preview(self, LEOalt, C):
+        """
+        Generate a preview of the ascent profile
+        h(x) = (0.25 LEOalt (x))^(c)
+        Inputs:
+            LEOalt: Altitude of Targert LEO, affects the target ascent path (higher LEOalt = steeper ascent)
+            C: Constant
+        Returns:
+            h: Array
+            x: Array
+        """
+        x = 1e-6 #Function not defined at x = 0, thus start "infinitessimally" close to 0
+        dx = 10
+        gamma = np.pi/2
+        C2 = 0.25*LEOalt
+        while abs(gamma - np.deg2rad(87)) > 1e-5:
+            while gamma > np.deg2rad(87):
+                gamma = np.arctan(C2*C*(C2*x)**(C-1))
+                x+=dx
+            x -= 2*dx
+            dx *= 0.5
+            gamma = np.arctan(C2*C*(C2*x)**(C-1))
+        x_step = 0
+        dx = 0.1
+        x_array = []
+        h_array = []
+        x_array.append(0)
+        x_array.append(0)
+        h_array.append(0)
+        h_array.append(1000)
+        h_step = 1000
+        while h_step <= LEOalt:
+            x_step += dx
+            h_step = 0.25 * C2 * (x_step + x)**(C) + 1000
+            h_array.append(h_step)
+            x_array.append(x_step)
+        return h_array, x_array
 
     def calcAscent(self, LEOalt, T, beta, C, m0, cDrag, A_front, propburn, dt = 1e-3, h_cutoff = 100000, mf = 0, steer_rate = 1, throttle_rate = 0.5, a_lim = 100.0):
         """
@@ -502,7 +539,7 @@ class Calculator(object):
         ascent_data["q"] = [0]
         
         while h_step <= h_cutoff:
-            #print(h_step)
+            #Debugging
             if h_step == 0:
                 temp =0 
             if h_step > 1000 and h_step < 1001:
@@ -538,7 +575,6 @@ class Calculator(object):
                 gamma_step += (T_step * np.sin(alpha_step)/(m_step*v_step) - 9.81/v_step*np.cos(gamma_step) + v_step/(6378000+h_step)*np.cos(gamma_step)) * dt
 
                 if gamma_step <= 1.5184364 and not pass_flag:
-
                     x -= x_step
                     pass_flag = True
                 gamma_tar = np.arctan(C2*C*(C2*(x_step + x))**(C-1))

@@ -123,7 +123,7 @@ class GUI():
         self.result = tk.StringVar()
         self.result.set("")
         self.root.title("Tsiolkowsky Calculator")
-        self.root.geometry("370x600")
+        self.root.geometry("370x650")
         msg = ""
         i1 = self.help_msgs.index("6\n")
         i2 = self.help_msgs.index("7\n")
@@ -150,6 +150,25 @@ class GUI():
         entries = self.addEntryColumn(1, 1, 14, frame = input_frm)
         label = tk.Label(input_frm, textvariable = self.result, font= ("Arial Bold", 16))
         label.grid(row = 15, column = 1)
+        self.entries["LEOalt"] = entries[0]
+        self.entries["Thrust"] = entries[1]
+        self.entries["Beta"] = entries[2]
+        self.entries["C"] = entries[3]
+        self.entries["Mass"] = entries[4]
+        self.entries["CD"] = entries[5]
+        self.entries["A"] = entries[6]
+        self.entries["propburn"] = entries[7]
+        self.entries["dt"] = entries[8]
+        self.entries["cutoff_h"] = entries[9]
+        self.entries["cutoff_m"] = entries[10]
+        self.entries["steer_rate"] = entries[11]
+        self.entries["throt_rate"] = entries[12]
+        self.entries["a_max"] = entries[13]
+        self.entries["Beta"].insert(0, "0")
+        self.entries["dt"].insert(0, "0.001")
+        self.entries["steer_rate"].insert(0, "1")
+        self.entries["throt_rate"].insert(0, "0.5")
+        self.entries["a_max"].insert(0, "100")
         button = tk.Button(button_frm, text = "Add List of Thrusts", command = self.Ascent_AddThrust)
         button.pack()
         button = tk.Button(button_frm, text = "Add List of CDs", command = self.Ascent_AddCDs)
@@ -158,11 +177,26 @@ class GUI():
         button.pack()
         button = tk.Button(button_frm, text = "Add List of Mass Flows", command = self.Ascent_AddMassFlows)
         button.pack()
+        button = tk.Button(button_frm, text = "Preview Ascent Profile", command = self.Ascent_Preview_profile)
+        button.pack()
         button = tk.Button(button_frm, text = "Calculate", command = self.Ascent_Calc)
         button.pack(side = tk.RIGHT)
         button = tk.Button(button_frm, text = "Clear Inputs", command = self.clear)
         button.pack(side = tk.LEFT)
         self.run()
+    
+    def Ascent_Preview_profile(self):
+        LEOalt = self.entries["LEOalt"].get()
+        C = self.entries["C"].get()
+        if LEOalt == "" or C == "":
+            self.ErrorMsg("Profile Preview requires LEO altitude and C")
+            return -1
+        LEOalt = int(LEOalt)
+        C = float(C)
+        h, x = self.tools["calculator"].gen_ascent_path_preview(LEOalt, C)
+        self.tools["plotter"].plot2D(x, h, xlim = [-max(x)*0.1, max(x)], xLab = "Downrange [m]", yLab = "Altitude [m]") 
+
+
     def Ascent_AddThrust(self):
         self.placeholder()
     def Ascent_AddCDs(self):

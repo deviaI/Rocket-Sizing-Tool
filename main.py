@@ -49,6 +49,7 @@ def main():
         #Venus Escape: 12.8
         #LEO: 9.3
         #SSO: 9.5
+        """
         n = 2
         pl = 1300
         dv_target = 13280
@@ -62,6 +63,12 @@ def main():
         print(Calc.calcAscent_Ideal_DV(393000))
         print(Calc.calcDelV(n, m[0:n], pl, isp[0:n], m_f = m_fuel[0:n]))
         print(Calc.calcBoosterDisc_FixedCore(isp[0:n], 320, m[0:n], m_booster, pl, MFR, mu_core, mu_booster, dv_target, m_f = m_fuel[0:n], booster_align=[2,3,4]))
+        """
+        base = os.path.dirname(__file__)
+        Plt = Plotter(os.path.join(base, "data"))
+        h, x = Calc.gen_ascent_path_preview(200000, 0.3)
+        Plt.plot2D(x, h, xlim = [-max(x)*0.1, max(x)])
+
         # print(Calc.calcAscent_Ideal_DV(250000))
         # m, factor, fuel = Calc.calcPoint(n, isp, pl, mu_core, dv_core, limit = 1e9)
         # print(m)
