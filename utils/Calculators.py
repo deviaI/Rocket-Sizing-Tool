@@ -382,9 +382,9 @@ class Calculator(object):
         dv_total = np.sqrt(dv_ascent+dv_orbit)
         return dv_total
 
-    def calcAscent(self, LEOalt, T, beta, C, m0, cDrag, A_front, propburn, dt = 1e-3, h_cutoff = 100000, mf = 0, steer_rate = 0.0174533, throttle_rate = 0.5, a_lim = 100.0):
+    def calcAscent(self, LEOalt, T, beta, C, m0, cDrag, A_front, propburn, dt = 1e-3, h_cutoff = 100000, mf = 0, steer_rate = 1, throttle_rate = 0.5, a_lim = 100.0):
         """
-        Calculate the Ascent Portion of a Launch Vehicle, based on a target trajectory of the form h(x) = (0.25 LEOalt (x))^(c), c = 0..1 starting 
+        Calculate the Ascent Portion of a Launch Vehicle, based on a target trajectory of the form h(x) = (0.25 LEOalt (x))^(c), c = 0..1 
         The LV will ascend vertically for 1km, proceed to initiate a gravity turn by 3° and then start attempting to follow the target launch trajectory
         The LV will continue ascending until reaching either the cutoff altitude or the cutoff mass
         The LV data can be provided in array like format, to allow for mid ascent staging
@@ -401,7 +401,7 @@ class Calculator(object):
             dt: time step. Default = 1e-3
             h_cutoff: cutoff altitude. Default = 100000
             mf: cutoff mass. Default = 0
-            steer_rate: maximum TVC deflection rate. Default = 0.0174533 (1° per second)
+            steer_rate: maximum TVC deflection rate. Default = 1° per second
             throttle_rate: maximum Throttle up/down rate. Default = 0.5 (50% per second)
             a_lim: maximum accelration. Default = 100 m/s^2 (approx. 10g)
         
@@ -429,21 +429,20 @@ class Calculator(object):
         #With d being set such that gamma(x) = arctan(d/dx h(x)) = 87° for x = x_EndOfGravTurn
         #Thefore trajectory has Target gamma(x) = arctan(d/dx h(x)) = arctan(C2*C*(C2*(x-d))^(C-1))
         n=0
-
         C2 = 0.25*LEOalt
         H = 6700
         pass_flag = False
         gamma = np.pi/2
         x = 1e-6 #Function not defined at x = 0, thus start "infinitessimally" close to 0
         dx = 10
-        while abs(gamma - 1.5184364) > 1e-5:
-            while gamma > 1.5184364:
-
+        while abs(gamma - np.deg2rad(87)) > 1e-5:
+            while gamma > np.deg2rad(87):
                 gamma = np.arctan(C2*C*(C2*x)**(C-1))
                 x+=dx
             x -= 2*dx
             dx *= 0.5
             gamma = np.arctan(C2*C*(C2*x)**(C-1))
+        beta = np.deg2rad(beta)
         rot_loss = - 0.464*np.cos(beta)
         x_step = 0
 

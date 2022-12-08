@@ -65,6 +65,12 @@ class GUI():
         button = tk.Button(self.root, text = "Required Mission Propellant", command=self.Fuel)
         button.config(height = 2, width=35)
         button.grid(row = 6, column = 0)
+        button = tk.Button(self.root, text = "Ascent Calculation", command=self.Ascent)
+        button.config(height = 2, width=35)
+        button.grid(row = 7, column = 0)
+        button = tk.Button(self.root, text = "Booster Calculations", command=self.Booster_Parent)
+        button.config(height = 2, width=35)
+        button.grid(row = 8, column = 0)
         button = tk.Button(self.root, image = self.help, command = self.help_msg)
         button.image = self.help
         button.config(width = 20, height = 20)
@@ -72,6 +78,101 @@ class GUI():
         self.data["title"] = "Rocket Sizing Tool"
         self.data["message"] = "Tool for basic sizing of Rockets, using the Ziolkowsky Equation. \n To begin a new Calculation select one of the Options"
     
+    def Booster_Parent(self):
+        self.root.destroy()
+        Window =  tk.Tk()
+        self.root = Window
+        self.root.title("Booster Calculations")
+        self.help = tk.PhotoImage(file = os.path.join(self.FileDir, "help.png"))
+        self.root.geometry("390x300")
+        path = os.path.join(self.FileDir, "back.png")
+        back = tk.PhotoImage(file = path)
+        button = tk.Button(Window, image = back, command = self.back, borderwidth=0)
+        button.image = back
+        button.config(height = 40, width = 50)
+        button.grid(row = 4, column = 0)
+        path = os.path.join(self.FileDir, "help.png")
+        help = tk.PhotoImage(file = path)
+        button = tk.Button(Window, image = help, command = self.help_msg)
+        button.image = help
+        button.config(width = 20, height = 20)
+        button.grid(row = 0, column = 1)
+        label = tk.Label(self.root, text="Choose Calculation", font = ("comic sans", 30))
+        label.grid(row=0,column=0,sticky="e")
+        button = tk.Button(self.root, text = "Flexible Boosters & Core", command = self.FlexFlex)
+        button.config(height = 2, width=35)
+        button.grid(row = 1, column = 0)
+        button = tk.Button(self.root, text = "Flexible Boosters & Fixed Core", command = self.FlexFix)
+        button.config(height = 2, width=35)
+        button.grid(row = 2, column = 0)
+        button = tk.Button(self.root, text = "Fixed Boosters & Core", command=self.FixFix)
+        button.config(height = 2, width=35)
+        button.grid(row = 3, column = 0)
+
+    def FlexFlex(self):
+        self.placeholder()
+    def FlexFix(self):
+        self.placeholder()
+    def FixFix(self):
+        self.placeholder()
+
+    def Ascent(self):
+        self.root.destroy()
+        Window = tk.Tk()
+        self.root = Window
+        self.result = tk.StringVar()
+        self.result.set("")
+        self.root.title("Tsiolkowsky Calculator")
+        self.root.geometry("370x600")
+        msg = ""
+        i1 = self.help_msgs.index("6\n")
+        i2 = self.help_msgs.index("7\n")
+        for i in range(i1+1, i2):
+            msg += self.help_msgs[i]
+        input_frm, button_frm = self.basicWindowSetup(help_msg = msg)
+        self.addLabelColumn(0, 1, ( "LEO Altitude [m]      ",
+                                    "Thrust [N]", 
+                                    "Latitude: [°]",
+                                    "C [-]",
+                                    "Mass [kg]",
+                                    "CD [-]",
+                                    "A [m^2]",
+                                    "Mass Flow [kg/s]",
+                                    "dt [s]",
+                                    "Cutoff Alt. [m]",
+                                    "Cutoff Mass [kg]",
+                                    "TVC Rate [°/s]",
+                                    "Throttle Rate [1/s]",
+                                    "G Limit [m/s^2]",
+                                    "Result           "),
+                                    ("Arial Bold", 16), 
+                                    frame = input_frm)
+        entries = self.addEntryColumn(1, 1, 14, frame = input_frm)
+        label = tk.Label(input_frm, textvariable = self.result, font= ("Arial Bold", 16))
+        label.grid(row = 15, column = 1)
+        button = tk.Button(button_frm, text = "Add List of Thrusts", command = self.Ascent_AddThrust)
+        button.pack()
+        button = tk.Button(button_frm, text = "Add List of CDs", command = self.Ascent_AddCDs)
+        button.pack()
+        button = tk.Button(button_frm, text = "Add List of Areas", command = self.Ascent_AddAreas)
+        button.pack()
+        button = tk.Button(button_frm, text = "Add List of Mass Flows", command = self.Ascent_AddMassFlows)
+        button.pack()
+        button = tk.Button(button_frm, text = "Calculate", command = self.Ascent_Calc)
+        button.pack(side = tk.RIGHT)
+        button = tk.Button(button_frm, text = "Clear Inputs", command = self.clear)
+        button.pack(side = tk.LEFT)
+        self.run()
+    def Ascent_AddThrust(self):
+        self.placeholder()
+    def Ascent_AddCDs(self):
+        self.placeholder()
+    def Ascent_AddAreas(self):
+        self.placeholder()
+    def Ascent_AddMassFlows(self):
+        self.placeholder()
+    def Ascent_Calc(self):
+        self.placeholder()
     def Tsiolkowsky(self):
         self.root.destroy()
         Window = tk.Tk()
@@ -798,9 +899,9 @@ class GUI():
         input_frm.pack()
         button_frm = tk.Frame(parent)
         button_frm.pack()
-        path = os.path.join(self.FileDir, "back.png")
-        back = tk.PhotoImage(file = path)
         if back_button:
+            path = os.path.join(self.FileDir, "back.png")
+            back = tk.PhotoImage(file = path)
             button = tk.Button(input_frm, image = back, command = self.back, borderwidth=0)
             button.image = back
             button.config(height = 40, width = 50)

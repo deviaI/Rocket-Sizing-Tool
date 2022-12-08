@@ -122,4 +122,38 @@ Known Fuel Values:
 
 "MethaLox": Mixture Ratio = 3.5 // Densities = (1140, 423)
 6
+Determine the Ascent Trajectory and Ascent losses for a given trajectory under constraints of 
+maximal acceleration and maximal TVC deflection rate.
+
+Ascent Trajectory is determined as 1000m vertical ascent, gravity turn by 3° and then tangentially entering the trajectroy path defined by
+h(x) = (0.25 * LEOalt * (x))^(c)
+
+Leo Altitude: Altitude of Target LEO, affects the target flight path (higher LEOalt = steeper ascent)
+
+Thrust : Maximal Thrust, or list of Maximal Thrusts per stage
+
+Latitude: latitude of launch site
+
+C: constant "c" in target launch trajectory
+
+Mass: Start mass, or array like of start masses per stage
+
+CD: Drag coefficient, or array like of drag coefficients per stage. Can be provided as value, if equal for all stages
+
+A: Frontal LV area, or array like of frontal LV area per stage. Can be provided as value, if equal for all stages
+
+Mass Flow: mass flow rate, or array like of mass flow rates per stage
+
+dt: time step
+
+Cutoff Alt: cutoff altitude
+
+Cutoff Mass: cutoff mass
+
+TVC Rate: maximum TVC deflection rate
+
+Throttle Rate: maximum Throttle up/down rate (Normalized to max Thrust)
+
+G Limit: maximum accelration
+7
 Placeholder

@@ -12,7 +12,7 @@ import os.path
 import sys
 
 def main():
-    gui = False
+    gui = True
     exe_path = None
     Calc = Calculator()
     if getattr(sys, 'frozen', False):
@@ -43,10 +43,15 @@ def main():
         gui = GUI(plotter = Plt,exporter= Exp, calculator = Calc, exeDir = exe_path)
         gui.run()
     else:
+        #DVs: 
+        #SL2: 13.28
+        #GTO: 11.8
+        #Venus Escape: 12.8
+        #LEO: 9.3
+        #SSO: 9.5
         n = 2
-        pl = 4000
-        dv_core = 11000
-        dv_tot = 9500
+        pl = 1300
+        dv_target = 13280
         isp = [320, 350, 440]
         mu_core = 0.12  	
         mu_booster = 0.1
@@ -56,7 +61,7 @@ def main():
         m_booster = 68288.09373158992
         print(Calc.calcAscent_Ideal_DV(393000))
         print(Calc.calcDelV(n, m[0:n], pl, isp[0:n], m_f = m_fuel[0:n]))
-        print(Calc.calcBoosterDisc_FixedCore(isp[0:n], 320, m[0:n], m_booster, pl, MFR, mu_core, mu_booster, dv_tot, m_f = m_fuel[0:n]))
+        print(Calc.calcBoosterDisc_FixedCore(isp[0:n], 320, m[0:n], m_booster, pl, MFR, mu_core, mu_booster, dv_target, m_f = m_fuel[0:n], booster_align=[2,3,4]))
         # print(Calc.calcAscent_Ideal_DV(250000))
         # m, factor, fuel = Calc.calcPoint(n, isp, pl, mu_core, dv_core, limit = 1e9)
         # print(m)
