@@ -211,7 +211,7 @@ class GUI():
             self.ErrorMsg("Profile Preview requires C1, C2 and Transition Altitude")
             return -1
         C1 = float(C1)
-        C2 = int(C2)
+        C2 = int(C2) * 1000
         Grav_Trans = int(Grav_Trans)
         if h_cutoff != "":
             h_cutoff = int(h_cutoff)
