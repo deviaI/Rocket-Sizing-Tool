@@ -381,13 +381,15 @@ class Calculator(object):
         dv_orbit = mu_earth*(1/r)
         dv_total = np.sqrt(dv_ascent+dv_orbit)
         return dv_total
-    def gen_ascent_path_preview(self, LEOalt, C):
+
+    def gen_ascent_path_preview(self, C1, C2,h_grav_turn = 1000,  h_cutoff = 200000):
         """
         Generate a preview of the ascent profile
-        h(x) = (0.25 LEOalt (x))^(c)
+        h(x) = (C2 * x)^(C1)
         Inputs:
-            LEOalt: Altitude of Targert LEO, affects the target ascent path (higher LEOalt = steeper ascent)
-            C: Constant
+            C1: Constant
+            C2: Constant
+            g
         Returns:
             h: Array
             x: Array
@@ -395,31 +397,35 @@ class Calculator(object):
         x = 1e-6 #Function not defined at x = 0, thus start "infinitessimally" close to 0
         dx = 10
         gamma = np.pi/2
-        C2 = 0.25*LEOalt
         while abs(gamma - np.deg2rad(87)) > 1e-5:
             while gamma > np.deg2rad(87):
-                gamma = np.arctan(C2*C*(C2*x)**(C-1))
+                gamma = np.arctan(C1*(C2**(C1))*x**(C1-1))
                 x+=dx
             x -= 2*dx
             dx *= 0.5
-            gamma = np.arctan(C2*C*(C2*x)**(C-1))
+            gamma = np.arctan(C1*(C2**(C1))*(x**(C1-1)))
+        h_offset = h_grav_turn - (C2 * (x))**(C1) 
         x_step = 0
-        dx = 0.1
+        dx = 1e-3
         x_array = []
         h_array = []
         x_array.append(0)
         x_array.append(0)
         h_array.append(0)
-        h_array.append(1000)
-        h_step = 1000
-        while h_step <= LEOalt:
+        h_array.append(h_grav_turn)
+        h_step = h_grav_turn
+        while h_step <= h_cutoff:
+            if h_step >= C2*4 and h_step <= C2*4+1000:
+                temp = 0
             x_step += dx
-            h_step = 0.25 * C2 * (x_step + x)**(C) + 1000
+            h_step = (C2 * (x_step + x))**(C1) + h_offset
             h_array.append(h_step)
             x_array.append(x_step)
+            dx *= 500/(h_array[-1] - h_array[-2])
         return h_array, x_array
 
-    def calcAscent(self, LEOalt, T, beta, C, m0, cDrag, A_front, propburn, dt = 1e-3, h_cutoff = 100000, mf = 0, steer_rate = 1, throttle_rate = 0.5, a_lim = 100.0):
+    def calcAscent(self, C1, T, beta, C2, m0, cDrag, A_front, propburn, dt = 1e-3, grav_turn = [1, 1000], h_cutoff = 100000, mf = 0, steer_rate = 1, throttle_rate = 0.5, a_lim = 100.0):
+        #NEEDS CHANGE VERIFICATION
         """
         Calculate the Ascent Portion of a Launch Vehicle, based on a target trajectory of the form h(x) = (0.25 LEOalt (x))^(c), c = 0..1 
         The LV will ascend vertically for 1km, proceed to initiate a gravity turn by 3° and then start attempting to follow the target launch trajectory
@@ -441,7 +447,7 @@ class Calculator(object):
             steer_rate: maximum TVC deflection rate. Default = 1° per second
             throttle_rate: maximum Throttle up/down rate. Default = 0.5 (50% per second)
             a_lim: maximum accelration. Default = 100 m/s^2 (approx. 10g)
-        
+            grav_turn: Initiation of gravity turn, [1, altitude] OR [0, speed]. Default = [1, 1000]
         Returns:
             dictionary of ascent data for each time step with entries:
                 "t": Time
@@ -461,28 +467,39 @@ class Calculator(object):
                 "tot_loss": Total Loss
         """
         #x = downrange distance
-        #Assume trajectory with 1000m vertical ascent, then perform gravity turn to gamma = 87°
-        #Then following a fligth path of h(x) = (0.25 LEOalt (x + d))^(c) + 1000
-        #With d being set such that gamma(x) = arctan(d/dx h(x)) = 87° for x = x_EndOfGravTurn
-        #Thefore trajectory has Target gamma(x) = arctan(d/dx h(x)) = arctan(C2*C*(C2*(x-d))^(C-1))
+        #Assume trajectory with some vertical ascent, then perform gravity turn to gamma = 87°
+        #Then following a fligth path of h(x) = (C2 (x + d))^(C1) + h_offset
+        #With d being set such that the flight path at the end of the gravity turn smoothly transitions into profile
+        #By Ensuring that gamma = arctan(h'(x_EndOfGravTUrn)) = 87°
+        #X is offset by x_87 given by the condition: arctan(h'(x_87)) = 87°
+        #Thus for h(x) = (C2 * (x+x_87))^(C1), arctan(h'(0)) = 87°
+        #At the End of the Gravity Turn the Offset is then modified by the current downrange such that d = x_87 - x_EndOfGravTurn
+        #Thus h(x) = (C2 * (x+x_87-x_EndOfGravTurn))^(C1) thus arctan(h'(x_EndOfGravTurn)) = 87° and a smooth transition of the flight profile is ensured
+
         n=0
-        C2 = 0.25*LEOalt
         H = 6700
         pass_flag = False
         gamma = np.pi/2
         x = 1e-6 #Function not defined at x = 0, thus start "infinitessimally" close to 0
         dx = 10
+        #Bisection Determination of x_87
         while abs(gamma - np.deg2rad(87)) > 1e-5:
             while gamma > np.deg2rad(87):
-                gamma = np.arctan(C2*C*(C2*x)**(C-1))
+                gamma = np.arctan(C1*(C2**(C1))*x**(C1-1))
                 x+=dx
             x -= 2*dx
             dx *= 0.5
-            gamma = np.arctan(C2*C*(C2*x)**(C-1))
+            gamma = np.arctan(C1*(C2**(C1))*x**(C1-1))
+        x_offset = x
         beta = np.deg2rad(beta)
         rot_loss = - 0.464*np.cos(beta)
         x_step = 0
-
+        if grav_turn[0] == 0:
+            h_gt = 0
+            v_gt = grav_turn[1]
+        else:
+            h_gt = grav_turn[1]
+            v_gt = 0
         try:
             m_step = m0[n]
         except:
@@ -566,18 +583,20 @@ class Calculator(object):
             if T_step > T_Max:
                 T_step = T_Max
             h_step += v_step * np.sin(gamma_step) * dt
-            x_step += abs(v_step * np.cos(gamma_step) * dt)    
-            if h_step < 1000:
+            x_step += abs(v_step * np.cos(gamma_step) * dt) 
+            if not (h_step > h_gt and v_step > v_gt):
                 x_step = 0
                 gamma_step = np.pi/2
                 gamma_tar = np.pi/2
             else:
+                #initiate Gravity Turn
                 gamma_step += (T_step * np.sin(alpha_step)/(m_step*v_step) - 9.81/v_step*np.cos(gamma_step) + v_step/(6378000+h_step)*np.cos(gamma_step)) * dt
-
-                if gamma_step <= 1.5184364 and not pass_flag:
-                    x -= x_step
+                #At End of Gravity Turn, determine offsets for smooth transition into profile
+                if gamma_step <= np.deg2rad(87) and not pass_flag:
+                    x_offset -= x_step
+                    #Ensure only done once
                     pass_flag = True
-                gamma_tar = np.arctan(C2*C*(C2*(x_step + x))**(C-1))
+                gamma_tar = np.arctan(C1*(C2**(C1))*(x_step + x_offset)**(C1-1))
             m_step += m_dot*dt
 
             t += dt

@@ -66,9 +66,11 @@ def main():
         """
         base = os.path.dirname(__file__)
         Plt = Plotter(os.path.join(base, "data"))
-        h, x = Calc.gen_ascent_path_preview(200000, 0.3)
-        Plt.plot2D(x, h, xlim = [-max(x)*0.1, max(x)])
-
+        h, x = Calc.gen_ascent_path_preview(0.4, 2500000, 500, 150000)
+        x = [val*1e-3 for val in x]
+        karman_line = [100000 for k in x]
+        Plt.plot2D(x, h, dataY_List = [karman_line], xlim = [-max(x)*0.1, max(x)], xLab = "Downrange [km]", yLab = "Altitude [m]", data_Labels = ["Ascent Profile" ,"Karman Line"])
+        temp = 0
         # print(Calc.calcAscent_Ideal_DV(250000))
         # m, factor, fuel = Calc.calcPoint(n, isp, pl, mu_core, dv_core, limit = 1e9)
         # print(m)
