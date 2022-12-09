@@ -130,10 +130,10 @@ class GUI():
         for i in range(i1+1, i2):
             msg += self.help_msgs[i]
         input_frm, button_frm = self.basicWindowSetup(help_msg = msg)
-        self.addLabelColumn(0, 1, ( "LEO Altitude [m]      ",
+        self.addLabelColumn(0, 1, ( "C1 [-] ",
                                     "Thrust [N]", 
                                     "Latitude: [°]",
-                                    "C [-]",
+                                    "C2 [-]",
                                     "Mass [kg]",
                                     "CD [-]",
                                     "A [m^2]",
@@ -150,10 +150,10 @@ class GUI():
         entries = self.addEntryColumn(1, 1, 14, frame = input_frm)
         label = tk.Label(input_frm, textvariable = self.result, font= ("Arial Bold", 16))
         label.grid(row = 15, column = 1)
-        self.entries["LEOalt"] = entries[0]
+        self.entries["C1"] = entries[0]
         self.entries["Thrust"] = entries[1]
         self.entries["Beta"] = entries[2]
-        self.entries["C"] = entries[3]
+        self.entries["C2"] = entries[3]
         self.entries["Mass"] = entries[4]
         self.entries["CD"] = entries[5]
         self.entries["A"] = entries[6]
@@ -194,7 +194,8 @@ class GUI():
         LEOalt = int(LEOalt)
         C = float(C)
         h, x = self.tools["calculator"].gen_ascent_path_preview(LEOalt, C)
-        self.tools["plotter"].plot2D(x, h, xlim = [-max(x)*0.1, max(x)], xLab = "Downrange [m]", yLab = "Altitude [m]") 
+        karman_line = [100000 for k in x]
+        self.tools["plotter"].plot2D(x, h, dataY_List = [karman_line], xlim = [-max(x)*0.1, max(x)], xLab = "Downrange [m]", yLab = "Altitude [m]", data_Labels = ["Ascent Profile" ,"Karman Line"]) 
 
 
     def Ascent_AddThrust(self):
