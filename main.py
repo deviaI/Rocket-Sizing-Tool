@@ -12,7 +12,7 @@ import os.path
 import sys
 
 def main():
-    gui = True
+    gui = False
     exe_path = None
     Calc = Calculator()
     if getattr(sys, 'frozen', False):
@@ -49,28 +49,43 @@ def main():
         #Venus Escape: 12.8
         #LEO: 9.3
         #SSO: 9.5
-        """
-        n = 2
-        pl = 1300
-        dv_target = 13280
-        isp = [320, 350, 440]
-        mu_core = 0.12  	
-        mu_booster = 0.1
-        MFR = 1.5
-        m = [103466.80868422716, 45525.39582105995, 20031.17416126638, 4000]
-        m_fuel = [91050.7916421199, 40062.34832253276, 17627.433261914415]
-        m_booster = 68288.09373158992
-        print(Calc.calcAscent_Ideal_DV(393000))
-        print(Calc.calcDelV(n, m[0:n], pl, isp[0:n], m_f = m_fuel[0:n]))
-        print(Calc.calcBoosterDisc_FixedCore(isp[0:n], 320, m[0:n], m_booster, pl, MFR, mu_core, mu_booster, dv_target, m_f = m_fuel[0:n], booster_align=[2,3,4]))
-        """
+        # n = 3
+        # pl = 5000
+        # dv_target = 11800
+        # isp = [320, 350, 440]
+        # mu_core = 0.12  	
+        # mu_booster = 0.1
+        # MFR = 1.5
+        # m = [103466.80868422716, 45525.39582105995, 20031.17416126638, pl]
+        # m_fuel = [91050.7916421199, 40062.34832253276, 17627.433261914415]
+        # m_booster = 68288.09373158992
+        # print(Calc.calcAscent_Ideal_DV(393000))
+        # print(Calc.calcDelV(n, m[0:n], pl, isp[0:n], m_f = m_fuel[0:n]))
+        # print(Calc.calcBoosterDisc_FixedCore(isp[0:n], 320, m[0:n], m_booster, pl, MFR, mu_core, mu_booster, dv_target, m_f = m_fuel[0:n], booster_align=[2,4]))
+
+
         base = os.path.dirname(__file__)
         Plt = Plotter(os.path.join(base, "data"))
+
+
+
+        """
         h, x = Calc.gen_ascent_path_preview(0.4, 2500000, 500, 150000)
         x = [val*1e-3 for val in x]
         karman_line = [100000 for k in x]
         Plt.plot2D(x, h, dataY_List = [karman_line], xlim = [-max(x)*0.1, max(x)], xLab = "Downrange [km]", yLab = "Altitude [m]", data_Labels = ["Ascent Profile" ,"Karman Line"])
         temp = 0
+        """
+        [inja, ello, injv, numel] = Calc.InjCalc([7.146, 1141], 1.5, [0.05, 0.1], 222, [26.32, 73.68], 0.0404)
+        Plt.plot2D(numel, inja[0], yLab = "injector Area [m^2]", xLab = "number injectors", dataY_List=[inja[1]], data_Labels=["Fuel", "Oxidizer"])
+        Plt.plot2D(numel, injv[0], yLab = "injection velocity[m/s]",  xLab = "number injectors", dataY_List=[injv[1]], data_Labels=["Fuel", "Oxidizer"])
+        Plt.plot2D(numel, ello, yLab = "element loading (kg/s)", xLab = "number injectors")
+        # mdotO/mdotF = 2.8
+        # mdotO/mdot-mdotO = 2.8
+        # mdot -mdotO(2.8)=mdotO
+        # mdot2.8 = mdotO + mdotO2.8
+        #mdot 2.8 = mdotO*(1+2.8
+        # mdotO = mdot*2.8/(1+2.8)
         # print(Calc.calcAscent_Ideal_DV(250000))
         # m, factor, fuel = Calc.calcPoint(n, isp, pl, mu_core, dv_core, limit = 1e9)
         # print(m)

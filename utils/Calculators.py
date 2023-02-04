@@ -860,8 +860,54 @@ class Calculator(object):
             dv_CoreStages = self.calcDelV(n_, m, m_pl, isp_core, m_f = mp_core)
             return dv_CoreStages + dv_BoosterStage
 
+
+    def InjCalc(self, dens, K, dPrel, pc, mdot, A):
+        inja = [[],[]]
+        ello = []
+        injv = [[],[]]
+        numbel = []
+        injdp = [[],[]]
+        dP_fu_0 = dPrel[0]*pc*100000
+        dP_ox_0 = dPrel[1]*pc*100000
+        v_fu_0 = mdot[0]/(A*dens[0])
+        v_ox_0 = mdot[1]/(A*dens[1])
+        for N in range(50,500):
+            A_inj_fu = mdot[0]/(N*(np.sqrt(dP_fu_0*2*dens[0]/K)+ dens[0] * v_fu_0))
+            A_inj_ox = mdot[1]/(N*(np.sqrt(dP_ox_0*2*dens[1]/K)+ dens[1] * v_ox_0))
+            elem_load = sum(mdot)/N
+            v_fu = mdot[0]/(A_inj_fu*N*dens[0])
+            v_ox = mdot[1]/(A_inj_ox*N*dens[1])
+            mu_ox = 195.3e-6
+            mu_fu = 117.2e-6
+            ks = 30e-6
+            l = 0.03
+            inja[0].append(A_inj_fu)
+            inja[1].append(A_inj_ox)
+            ello.append(elem_load)
+            injv[0].append(v_fu)
+            injv[1].append(v_ox)
+            numbel.append(N)
+        return inja, ello, injv, numbel
+
+    def solveLam(self, ks, d, Re):
+        A = -2*np.log10((ks/d)/3.7 + 12/Re)
+        B = -2*np.log10((ks/d)/3.7 + 2.51*A/Re)
+        C = -2*np.log10((ks/d)/3.7 + 2.51*B/Re)
+        return (A-(B-A)**2/(C-2*B+A))**-2
+
+    #//////////////////////////////////////
+    #//////////////////////////////////////
+    #//////////////////////////////////////
+    #//////////////////////////////////////
+    #//////////////////////////////////////
     #//////////////////////////////////////
     #OBSOLETE
+    #//////////////////////////////////////
+    #//////////////////////////////////////
+    #//////////////////////////////////////
+    #//////////////////////////////////////
+    #//////////////////////////////////////
+    #//////////////////////////////////////
     #//////////////////////////////////////
 
     def f(self, mu, isp, m_pl, delv, limit):
