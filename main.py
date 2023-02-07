@@ -10,6 +10,7 @@ from utils.Plotters import Plotter
 from utils.GUI import GUI
 import os.path
 import sys
+import csv
 
 def main():
     gui = False
@@ -66,20 +67,45 @@ def main():
 
         base = os.path.dirname(__file__)
         Plt = Plotter(os.path.join(base, "data"))
+        Exp = Exporter(os.path.join(base, "data"))
+
+        rez = Calc.calcAscent(0.4, 2100000, 0, 2500000, 149000, 0.75, 4.5, 600, mf = 58000)
+        time = rez["t"]
+        downrange = rez["x"]
+        alt = rez["h"]
+        vel = rez["v"]
+        q = rez["q"]
+        T = rez["T"]
+        a = rez["a"]
+        m = rez["m"]
+        D = rez["D"]
+        alpha = rez["alpha"]
+        tot_loss = rez["tot_loss"]
+        for i in range(0, len(a)):
+            a[i] /= 9.81
+        # Plt.plot2D(dataX = time, dataY = alt, yLab="Altitude", xLab="Time", filename= "alt_t", savefile=1, show=0)
+        # Plt.plot2D(dataX = downrange, dataY = alt, yLab="Altitude", xLab="Downrange", filename= "alt_x", savefile=1, show=0)
+        # Plt.plot2D(dataX = time, dataY = vel, yLab="Velocity", xLab="Time", filename= "v_t", savefile=1, show=0)
+        # Plt.plot2D(dataX = time, dataY = q, yLab="Dynamic Pressure", xLab="Time", filename= "q_t", savefile=1, show=0)
+        # Plt.plot2D(dataX = time, dataY = T, yLab="Thrust", xLab="Time", filename= "T_t", savefile=1, show=0)
+        # Plt.plot2D(dataX = time, dataY = a, yLab="Gs", xLab="Time", filename= "a_t", savefile=1, show=0)
+        # Plt.plot2D(dataX = time, dataY = D, yLab="Drag", xLab="Time", filename= "D_t", savefile=1, show=0)
+        # Plt.plot2D(dataX = time, dataY = m, yLab="Mass", xLab="Time", filename= "m_t", savefile=1, show=0)
+        # Plt.plot2D(dataX = time, dataY = alpha, yLab="Steering Angle", xLab="Time", filename= "alpha_t", savefile=1, show=0)
+        # Plt.plot2D(dataX = time, dataY = tot_loss, yLab="Ascent Losses", xLab="Time", filename= "loss_t", savefile=1, show=0)
+        Exp.ExportData(data=alt, fType = ".csv", fName = "Altitude")
+        Exp.ExportData(data=time, fType = ".csv", fName = "Time")
+
+        # h, x = Calc.gen_ascent_path_preview(0.4, 2500000, 500, 150000)
+        # x = [val*1e-3 for val in x]
+        # karman_line = [100000 for k in x]
+        # Plt.plot2D(x, h, dataY_List = [karman_line], xlim = [-max(x)*0.1, max(x)], xLab = "Downrange [km]", yLab = "Altitude [m]", data_Labels = ["Ascent Profile" ,"Karman Line"])
 
 
-
-        """
-        h, x = Calc.gen_ascent_path_preview(0.4, 2500000, 500, 150000)
-        x = [val*1e-3 for val in x]
-        karman_line = [100000 for k in x]
-        Plt.plot2D(x, h, dataY_List = [karman_line], xlim = [-max(x)*0.1, max(x)], xLab = "Downrange [km]", yLab = "Altitude [m]", data_Labels = ["Ascent Profile" ,"Karman Line"])
-        temp = 0
-        """
-        [inja, ello, injv, numel] = Calc.InjCalc([7.146, 1141], 1.5, [0.05, 0.1], 222, [26.32, 73.68], 0.0404)
-        Plt.plot2D(numel, inja[0], yLab = "injector Area [m^2]", xLab = "number injectors", dataY_List=[inja[1]], data_Labels=["Fuel", "Oxidizer"])
-        Plt.plot2D(numel, injv[0], yLab = "injection velocity[m/s]",  xLab = "number injectors", dataY_List=[injv[1]], data_Labels=["Fuel", "Oxidizer"])
-        Plt.plot2D(numel, ello, yLab = "element loading (kg/s)", xLab = "number injectors")
+        # [inja, ello, injv, numel] = Calc.InjCalc([7.146, 1141], 1.5, [0.05, 0.1], 222, [26.32, 73.68], 0.0404)
+        # Plt.plot2D(numel, inja[0], yLab = "injector Area [m^2]", xLab = "number injectors", dataY_List=[inja[1]], data_Labels=["Fuel", "Oxidizer"])
+        # Plt.plot2D(numel, injv[0], yLab = "injection velocity[m/s]",  xLab = "number injectors", dataY_List=[injv[1]], data_Labels=["Fuel", "Oxidizer"])
+        # Plt.plot2D(numel, ello, yLab = "element loading (kg/s)", xLab = "number injectors")
         # mdotO/mdotF = 2.8
         # mdotO/mdot-mdotO = 2.8
         # mdot -mdotO(2.8)=mdotO

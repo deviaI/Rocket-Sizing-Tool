@@ -424,7 +424,7 @@ class Calculator(object):
             dx *= 500/(h_array[-1] - h_array[-2])
         return h_array, x_array
 
-    def calcAscent(self, C1, T, beta, C2, m0, cDrag, A_front, propburn, dt = 1e-3, grav_turn = [1, 1000], h_cutoff = 100000, mf = 0, steer_rate = 1, throttle_rate = 0.5, a_lim = 100.0):
+    def calcAscent(self, C1, T, beta, C2, m0, cDrag, A_front, propburn, dt = 1e-3, grav_turn = [1, 1000], h_cutoff = 100000, mf = 0, steer_rate = 0.017452006980803, throttle_rate = 0.5, a_lim = 100.0):
         #NEEDS CHANGE VERIFICATION
         """
         Calculate the Ascent Portion of a Launch Vehicle, based on a target trajectory of the form h(x) = (0.25 LEOalt (x))^(c), c = 0..1 
@@ -465,7 +465,7 @@ class Calculator(object):
                 "steer_loss": Steering Loss
                 "drag_loss": Drag Loss
                 "tot_loss": Total Loss
-        """
+        """ 
         #x = downrange distance
         #Assume trajectory with some vertical ascent, then perform gravity turn to gamma = 87°
         #Then following a fligth path of h(x) = (C2 (x + d))^(C1) + h_offset
@@ -521,11 +521,13 @@ class Calculator(object):
         except:
             A = A_front
         try:
-            T_Step = T[n]
+            T_step = T[n]
             T_Max = T[n]
         except:
-            T_Step = T
+            T_step = T
             T_Max = T
+        if m_dot > 0:
+            m_dot *= -1
 
         v_step = 0
         gamma_step = np.pi/2
@@ -636,6 +638,10 @@ class Calculator(object):
 
     def calcAlpha(self, gamma_0, gamma_tar, T, m, v, r, dt, alpha_0, steer_rate):
         #iteratively determine the steering angle in order to best follow the profile
+        if alpha_0 >= 0.436300: 
+            return 0.34904
+        elif alpha_0 <= -0.34904:
+            return -0.436300
         try:
             alpha = np.arcsin(m*v/T *((gamma_tar-gamma_0)/dt + np.cos(gamma_0)*(9.81/v - v/r)))
         except RuntimeWarning:
