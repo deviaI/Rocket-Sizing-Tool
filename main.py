@@ -8,6 +8,7 @@ from utils.Calculators import Calculator
 from utils.Exporter import Exporter
 from utils.Plotters import Plotter
 from utils.GUI import GUI
+from utils.Lookup import LookUpTable
 import os.path
 import sys
 import csv
@@ -68,7 +69,11 @@ def main():
         base = os.path.dirname(__file__)
         Plt = Plotter(os.path.join(base, "data"))
         Exp = Exporter(os.path.join(base, "data"))
-
+        TMLU = LookUpTable()
+        Eff = TMLU.returnTable(0)
+        print(TMLU.EffLookup(10))
+        Plt.plot2D(Eff[0], Eff[1])
+        """
         rez = Calc.calcAscent(0.4, 2100000, 0, 2500000, 149000, 0.75, 4.5, 600, mf = 58000)
         time = rez["t"]
         downrange = rez["x"]
@@ -83,6 +88,7 @@ def main():
         tot_loss = rez["tot_loss"]
         for i in range(0, len(a)):
             a[i] /= 9.81
+        """
         # Plt.plot2D(dataX = time, dataY = alt, yLab="Altitude", xLab="Time", filename= "alt_t", savefile=1, show=0)
         # Plt.plot2D(dataX = downrange, dataY = alt, yLab="Altitude", xLab="Downrange", filename= "alt_x", savefile=1, show=0)
         # Plt.plot2D(dataX = time, dataY = vel, yLab="Velocity", xLab="Time", filename= "v_t", savefile=1, show=0)
@@ -93,8 +99,8 @@ def main():
         # Plt.plot2D(dataX = time, dataY = m, yLab="Mass", xLab="Time", filename= "m_t", savefile=1, show=0)
         # Plt.plot2D(dataX = time, dataY = alpha, yLab="Steering Angle", xLab="Time", filename= "alpha_t", savefile=1, show=0)
         # Plt.plot2D(dataX = time, dataY = tot_loss, yLab="Ascent Losses", xLab="Time", filename= "loss_t", savefile=1, show=0)
-        Exp.ExportData(data=alt, fType = ".csv", fName = "Altitude")
-        Exp.ExportData(data=time, fType = ".csv", fName = "Time")
+        # Exp.ExportData(data=alt, fType = ".csv", fName = "Altitude")
+        # Exp.ExportData(data=time, fType = ".csv", fName = "Time")
 
         # h, x = Calc.gen_ascent_path_preview(0.4, 2500000, 500, 150000)
         # x = [val*1e-3 for val in x]

@@ -425,7 +425,6 @@ class Calculator(object):
         return h_array, x_array
 
     def calcAscent(self, C1, T, beta, C2, m0, cDrag, A_front, propburn, dt = 1e-3, grav_turn = [1, 1000], h_cutoff = 100000, mf = 0, steer_rate = 0.017452006980803, throttle_rate = 0.5, a_lim = 100.0):
-        #NEEDS CHANGE VERIFICATION
         """
         Calculate the Ascent Portion of a Launch Vehicle, based on a target trajectory of the form h(x) = (0.25 LEOalt (x))^(c), c = 0..1 
         The LV will ascend vertically for 1km, proceed to initiate a gravity turn by 3° and then start attempting to follow the target launch trajectory
@@ -1257,5 +1256,4 @@ class Calculator(object):
             Y[k,0] = m_0_
             Y[k,1] = mu[k]
             Y[k,2] = results["Optimal Stage Sizing Factor"]
-        return Y
-        
+        return Y  

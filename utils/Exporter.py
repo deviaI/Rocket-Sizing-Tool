@@ -44,7 +44,7 @@ class Exporter(object):
             fName += "(" + str(i) + ")"
             fName_Full = fName + fType
             i += 1
-        np.savetxt(fName_Full, data, delimiter=",")
+        np.savetxt(fName_Full, data, delimiter=",", fmt = "%.4f")
         return 0
 
     def AppendData(self, data, fName, fDir = None):
