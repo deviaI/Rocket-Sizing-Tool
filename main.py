@@ -71,8 +71,9 @@ def main():
         Exp = Exporter(os.path.join(base, "data"))
         TMLU = LookUpTable()
         Eff = TMLU.returnTable(0)
-        print(TMLU.EffLookup(10))
-        Plt.plot2D(Eff[0], Eff[1])
+        Speed = TMLU.returnTable(1, "AL2219-T87")
+        print(TMLU.SpeedLookup("AL2219-T87", 550))
+        Plt.plot2D(Speed[0], Speed[1], [200, 1310], [100,550])
         """
         rez = Calc.calcAscent(0.4, 2100000, 0, 2500000, 149000, 0.75, 4.5, 600, mf = 58000)
         time = rez["t"]
