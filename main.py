@@ -70,6 +70,7 @@ def main():
         Plt = Plotter(os.path.join(base, "data"))
         Exp = Exporter(os.path.join(base, "data"))
         TMLU = LookUpTable()
+        TMLU.showKeyList()
         Eff = TMLU.returnTable(0)
         Speed = TMLU.returnTable(1, "AL2219-T87")
         print(TMLU.SpeedLookup("AL2219-T87", 550))
