@@ -51,30 +51,30 @@ def main():
         #Venus Escape: 12.8
         #LEO: 9.3
         #SSO: 9.5
-        # n = 3
-        # pl = 5000
-        # dv_target = 11800
-        # isp = [320, 350, 440]
-        # mu_core = 0.12  	
-        # mu_booster = 0.1
-        # MFR = 1.5
-        # m = [103466.80868422716, 45525.39582105995, 20031.17416126638, pl]
-        # m_fuel = [91050.7916421199, 40062.34832253276, 17627.433261914415]
-        # m_booster = 68288.09373158992
-        # print(Calc.calcAscent_Ideal_DV(393000))
-        # print(Calc.calcDelV(n, m[0:n], pl, isp[0:n], m_f = m_fuel[0:n]))
-        # print(Calc.calcBoosterDisc_FixedCore(isp[0:n], 320, m[0:n], m_booster, pl, MFR, mu_core, mu_booster, dv_target, m_f = m_fuel[0:n], booster_align=[2,4]))
+        n = 3
+        pl = 15000
+        dv_target = 9200
+        isp = [320, 350, 440]
+        mu_core = 0.12  	
+        mu_booster = 0.1
+        MFR = 1.5
+        m = [103466.80868422716, 45525.39582105995, 20031.17416126638, pl]
+        m_fuel = [91050.7916421199, 40062.34832253276, 17627.433261914415]
+        m_booster = 68288.09373158992
+        print(Calc.calcAscent_Ideal_DV(393000))
+        print(Calc.calcDelV(n, m[0:n], pl, isp[0:n], m_f = m_fuel[0:n]))
+        print(Calc.calcBoosterDisc_FixedCore(isp[0:n], 320, m[0:n], m_booster, pl, MFR, mu_core, mu_booster, dv_target, m_f = m_fuel[0:n], booster_align=[2,4]))
 
 
         base = os.path.dirname(__file__)
         Plt = Plotter(os.path.join(base, "data"))
         Exp = Exporter(os.path.join(base, "data"))
-        TMLU = LookUpTable()
-        TMLU.showKeyList()
-        Eff = TMLU.returnTable(0)
-        Speed = TMLU.returnTable(1, "AL2219-T87")
-        print(TMLU.SpeedLookup("AL2219-T87", 550))
-        Plt.plot2D(Speed[0], Speed[1], [200, 1310], [100,550])
+        # TMLU = LookUpTable()
+        # TMLU.showKeyList()
+        # Eff = TMLU.returnTable(0)
+        # Speed = TMLU.returnTable(1, "AL2219-T87")
+        # print(TMLU.SpeedLookup("AL2219-T87", 550))
+        # Plt.plot2D(Speed[0], Speed[1], [200, 1310], [100,550])
         """
         rez = Calc.calcAscent(0.4, 2100000, 0, 2500000, 149000, 0.75, 4.5, 600, mf = 58000)
         time = rez["t"]
