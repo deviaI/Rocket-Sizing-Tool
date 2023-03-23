@@ -125,16 +125,16 @@ Known Fuel Values:
 Determine the Ascent Trajectory and Ascent losses for a given trajectory under constraints of 
 maximal acceleration and maximal TVC deflection rate.
 
-Ascent Trajectory is determined as 1000m vertical ascent, gravity turn by 3° and then tangentially entering the trajectroy path defined by
-h(x) = (0.25 * LEOalt * (x))^(c)
+Ascent Trajectory is determined as vertical ascent, gravity turn by 3° and then tangentially entering the trajectroy path defined by
+h(x) = (1000 * C2 * x)^C1
 
-Leo Altitude: Altitude of Target LEO, affects the target flight path (higher LEOalt = steeper ascent)
+C1: Constant 1 in target trajectory E[0;1]
 
 Thrust : Maximal Thrust, or list of Maximal Thrusts per stage
 
 Latitude: latitude of launch site
 
-C: constant "c" in target launch trajectory
+C2: constant 2 in target launch trajectory (~1000 - 2500) 
 
 Mass: Start mass, or array like of start masses per stage
 

@@ -138,18 +138,18 @@ class GUI():
                                     "CD [-]",
                                     "A [m^2]",
                                     "Mass Flow [kg/s]",
+                                    "",
+                                    "Transition Mode",
                                     "dt [s]",
                                     "Cutoff Alt. [m]",
                                     "Cutoff Mass [kg]",
                                     "TVC Rate [°/s]",
                                     "Throttle Rate [1/s]",
                                     "G Limit [m/s^2]",
-                                    "Result           "),
+                                    ),
                                     ("Arial Bold", 16), 
                                     frame = input_frm)
-        entries = self.addEntryColumn(1, 1, 14, frame = input_frm)
-        label = tk.Label(input_frm, textvariable = self.result, font= ("Arial Bold", 16))
-        label.grid(row = 15, column = 1)
+        entries = self.addEntryColumn(1, 1, 9, frame = input_frm)
         self.entries["C1"] = entries[0]
         self.entries["Thrust"] = entries[1]
         self.entries["Beta"] = entries[2]
@@ -158,17 +158,31 @@ class GUI():
         self.entries["CD"] = entries[5]
         self.entries["A"] = entries[6]
         self.entries["propburn"] = entries[7]
-        self.entries["dt"] = entries[8]
-        self.entries["cutoff_h"] = entries[9]
-        self.entries["cutoff_m"] = entries[10]
-        self.entries["steer_rate"] = entries[11]
-        self.entries["throt_rate"] = entries[12]
-        self.entries["a_max"] = entries[13]
+        self.entries["Grav_Trans"] = entries[8]
+        entries = self.addEntryColumn(1, 11, 6, frame = input_frm)
+        self.entries["dt"] = entries[0]
+        self.entries["cutoff_h"] = entries[1]
+        self.entries["cutoff_m"] = entries[2]
+        self.entries["steer_rate"] = entries[3]
+        self.entries["throt_rate"] = entries[4]
+        self.entries["a_max"] = entries[5]
         self.entries["Beta"].insert(0, "0")
         self.entries["dt"].insert(0, "0.001")
         self.entries["steer_rate"].insert(0, "1")
         self.entries["throt_rate"].insert(0, "0.5")
         self.entries["a_max"].insert(0, "100")
+        self.data["ButtonLbl"] = tk.StringVar()
+        self.data["ButtonLbl"].set("Altitude")
+        self.data["TransitionMode"] = -1
+        button = tk.Button(input_frm, textvariable=  self.data["ButtonLbl"], command = self.Ascent_SwitchGT)
+        button.grid(row = 10, column = 1)
+        label = tk.Label(input_frm, textvariable = self.result, font= ("Arial Bold", 16))
+        label.grid(row = 15, column = 1)
+        TransLabel = tk.StringVar()
+        TransLabel.set("Grav. Transition [m]")
+        self.data["TransLabel"] = TransLabel
+        label = tk.Label(input_frm, textvariable = self.data["TransLabel"], font= ("Arial Bold", 16))
+        label.grid(row = 9, column = 0)
         button = tk.Button(button_frm, text = "Add List of Thrusts", command = self.Ascent_AddThrust)
         button.pack()
         button = tk.Button(button_frm, text = "Add List of CDs", command = self.Ascent_AddCDs)
@@ -186,17 +200,36 @@ class GUI():
         self.run()
     
     def Ascent_Preview_profile(self):
-        LEOalt = self.entries["LEOalt"].get()
-        C = self.entries["C"].get()
-        if LEOalt == "" or C == "":
-            self.ErrorMsg("Profile Preview requires LEO altitude and C")
+        C1 = self.entries["C1"].get()
+        C2 = self.entries["C2"].get()
+        Grav_Trans = self.entries["Grav_Trans"].get()
+        h_cutoff = self.entries["cutoff_h"].get()
+        if self.data["TransitionMode"] == 1:
+            self.ErrorMsg("Preview only available in Altitude Transition Mode")
             return -1
-        LEOalt = int(LEOalt)
-        C = float(C)
-        h, x = self.tools["calculator"].gen_ascent_path_preview(LEOalt, C)
+        if C1 == "" or C2 == "" or Grav_Trans == "":
+            self.ErrorMsg("Profile Preview requires C1, C2 and Transition Altitude")
+            return -1
+        C1 = float(C1)
+        C2 = int(C2) * 1000
+        Grav_Trans = int(Grav_Trans)
+        if h_cutoff != "":
+            h_cutoff = int(h_cutoff)
+        else:
+            h_cutoff = 200000
+        h, x = self.tools["calculator"].gen_ascent_path_preview(C1, C2, Grav_Trans, h_cutoff)
+        x = [val*1e-3 for val in x]
         karman_line = [100000 for k in x]
-        self.tools["plotter"].plot2D(x, h, dataY_List = [karman_line], xlim = [-max(x)*0.1, max(x)], xLab = "Downrange [m]", yLab = "Altitude [m]", data_Labels = ["Ascent Profile" ,"Karman Line"]) 
+        self.tools["plotter"].plot2D(x, h, dataY_List = [karman_line], xlim = [-max(x)*0.1, max(x)], xLab = "Downrange [km]", yLab = "Altitude [m]", data_Labels = ["Ascent Profile" ,"Karman Line"]) 
 
+    def Ascent_SwitchGT(self):
+        self.data["TransitionMode"] *= -1
+        if self.data["TransitionMode"] == -1:
+            self.data["ButtonLbl"].set("Altitude")
+            self.data["TransLabel"].set("Grav. Transition [m]")
+        elif self.data["TransitionMode"] == 1:
+            self.data["ButtonLbl"].set("Velocity")
+            self.data["TransLabel"].set("Grav. Transition [m/s]")
 
     def Ascent_AddThrust(self):
         self.placeholder()
@@ -208,6 +241,7 @@ class GUI():
         self.placeholder()
     def Ascent_Calc(self):
         self.placeholder()
+    
     def Tsiolkowsky(self):
         self.root.destroy()
         Window = tk.Tk()
