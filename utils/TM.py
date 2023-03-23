@@ -16,11 +16,11 @@ L = 0.3 # inducer inlet hub to tip diameter ratio (Humble, p. 254)
 #inputs######################################################
 
 #CEA
-p_pb = 30000000  #[Pa]
+p_pb = 35000000  #[Pa]
 of_ratio_pb= 0.38 # oxidizer fuel ratio
-T_i_t2 = 1169 #[K] (nice) turbine inlet temperature
-cp_t2= 9211 #[J/kg*K] constant pressure specific heat
-gamma_t2= 1.1361 #C
+T_i_t2 = 1178 #[K] (nice) turbine inlet temperature
+cp_t2= 9007 #[J/kg*K] constant pressure specific heat
+gamma_t2= 1.1356 #C
 
 #pressures
 p_cc = 22000000 #[Pa]
@@ -88,7 +88,7 @@ P_req_p3 = (g*m_dot_fuel*H_p_p3)/eta_p_p3 #[W] power requirement to drive pump
 #Lox Pump (p4)
                                             
 roh_p4 = 1141.0  # CP.PropsSI("D","T", T_p4, "P", p_i_p4, "oxygen") #[kg/m^3]
-m_dot_p4= m_dot_p2 #[kg/s] massflow tank 
+m_dot_p4= m_dot_ox_tank #[kg/s] massflow tank 
 
 Q_p4 = m_dot_p4/roh_p4 #[m^3/s] volume flow rate
 H_p_p4 = delta_p_p_p4/(g*roh_p4) #[m] pump head rise
@@ -123,7 +123,7 @@ P_req_p2 = (g*m_dot_p2*H_p_p2)/eta_p_p2 #[W] power requirement to drive pump
 #Turbine (t2)
 
 m_dot_pb = m_dot_fuel + m_dot_ox_pb
-P_req_turb = 1.2*(P_req_p2+P_req_p3+P_req_p4)/0.98
+P_req_turb = 1.4*(P_req_p2+P_req_p3+P_req_p4)/0.98
 
 P_trat_t2=(1-(P_req_turb/(eta_t2*m_dot_pb*cp_t2*T_i_t2)))**(gamma_t2/(gamma_t2-1)) #Engine balance (Humble p.212)
 p_out_t2 = P_trat_t2*p_i_t2
@@ -133,7 +133,8 @@ p_out_t2 = P_trat_t2*p_i_t2
 #vratio_t2 = u_m_t2/C_0_t2 
 #D_m_t2 = (2*u_m_t2)/N_r_p3 #mean turbine pitch diameter, without gears
 
-
+print("Massflows:", "%.2f"%m_dot_fuel, "%.2f"%m_dot_ox_tank, "%.2f"%m_dot_ox_pb)
+print("Pump Mass Flows: ", "%.2f"%m_dot_p2, "%.2f"%m_dot_p4)
 print("Pressure output turbine","%.2f"%(p_out_t2/100000)) #must be bigger than 270
 print("Diameter", "%.2f"%D_1t_p2, "%.2f"%D_1t_p3, "%.2f"%D_1t_p4)
 print("RPM:","%.0f"%N_p2)
