@@ -65,13 +65,182 @@ class GUI():
         button = tk.Button(self.root, text = "Required Mission Propellant", command=self.Fuel)
         button.config(height = 2, width=35)
         button.grid(row = 6, column = 0)
+        button = tk.Button(self.root, text = "Ascent Calculation", command=self.Ascent)
+        button.config(height = 2, width=35)
+        button.grid(row = 7, column = 0)
+        button = tk.Button(self.root, text = "Booster Calculations", command=self.Booster_Parent)
+        button.config(height = 2, width=35)
+        button.grid(row = 8, column = 0)
         button = tk.Button(self.root, image = self.help, command = self.help_msg)
         button.image = self.help
         button.config(width = 20, height = 20)
         button.grid(row = 0, column = 1)
         self.data["title"] = "Rocket Sizing Tool"
         self.data["message"] = "Tool for basic sizing of Rockets, using the Ziolkowsky Equation. \n To begin a new Calculation select one of the Options"
+    
+    def Booster_Parent(self):
+        self.root.destroy()
+        Window =  tk.Tk()
+        self.root = Window
+        self.root.title("Booster Calculations")
+        self.help = tk.PhotoImage(file = os.path.join(self.FileDir, "help.png"))
+        self.root.geometry("390x300")
+        path = os.path.join(self.FileDir, "back.png")
+        back = tk.PhotoImage(file = path)
+        button = tk.Button(Window, image = back, command = self.back, borderwidth=0)
+        button.image = back
+        button.config(height = 40, width = 50)
+        button.grid(row = 4, column = 0)
+        path = os.path.join(self.FileDir, "help.png")
+        help = tk.PhotoImage(file = path)
+        button = tk.Button(Window, image = help, command = self.help_msg)
+        button.image = help
+        button.config(width = 20, height = 20)
+        button.grid(row = 0, column = 1)
+        label = tk.Label(self.root, text="Choose Calculation", font = ("comic sans", 30))
+        label.grid(row=0,column=0,sticky="e")
+        button = tk.Button(self.root, text = "Flexible Boosters & Core", command = self.FlexFlex)
+        button.config(height = 2, width=35)
+        button.grid(row = 1, column = 0)
+        button = tk.Button(self.root, text = "Flexible Boosters & Fixed Core", command = self.FlexFix)
+        button.config(height = 2, width=35)
+        button.grid(row = 2, column = 0)
+        button = tk.Button(self.root, text = "Fixed Boosters & Core", command=self.FixFix)
+        button.config(height = 2, width=35)
+        button.grid(row = 3, column = 0)
 
+    def FlexFlex(self):
+        self.placeholder()
+    def FlexFix(self):
+        self.placeholder()
+    def FixFix(self):
+        self.placeholder()
+
+    def Ascent(self):
+        self.root.destroy()
+        Window = tk.Tk()
+        self.root = Window
+        self.result = tk.StringVar()
+        self.result.set("")
+        self.root.title("Tsiolkowsky Calculator")
+        self.root.geometry("370x650")
+        msg = ""
+        i1 = self.help_msgs.index("6\n")
+        i2 = self.help_msgs.index("7\n")
+        for i in range(i1+1, i2):
+            msg += self.help_msgs[i]
+        input_frm, button_frm = self.basicWindowSetup(help_msg = msg)
+        self.addLabelColumn(0, 1, ( "C1 [-] ",
+                                    "Thrust [N]", 
+                                    "Latitude: [°]",
+                                    "C2 [-]",
+                                    "Mass [kg]",
+                                    "CD [-]",
+                                    "A [m^2]",
+                                    "Mass Flow [kg/s]",
+                                    "",
+                                    "Transition Mode",
+                                    "dt [s]",
+                                    "Cutoff Alt. [m]",
+                                    "Cutoff Mass [kg]",
+                                    "TVC Rate [°/s]",
+                                    "Throttle Rate [1/s]",
+                                    "G Limit [m/s^2]",
+                                    ),
+                                    ("Arial Bold", 16), 
+                                    frame = input_frm)
+        entries = self.addEntryColumn(1, 1, 9, frame = input_frm)
+        self.entries["C1"] = entries[0]
+        self.entries["Thrust"] = entries[1]
+        self.entries["Beta"] = entries[2]
+        self.entries["C2"] = entries[3]
+        self.entries["Mass"] = entries[4]
+        self.entries["CD"] = entries[5]
+        self.entries["A"] = entries[6]
+        self.entries["propburn"] = entries[7]
+        self.entries["Grav_Trans"] = entries[8]
+        entries = self.addEntryColumn(1, 11, 6, frame = input_frm)
+        self.entries["dt"] = entries[0]
+        self.entries["cutoff_h"] = entries[1]
+        self.entries["cutoff_m"] = entries[2]
+        self.entries["steer_rate"] = entries[3]
+        self.entries["throt_rate"] = entries[4]
+        self.entries["a_max"] = entries[5]
+        self.entries["Beta"].insert(0, "0")
+        self.entries["dt"].insert(0, "0.001")
+        self.entries["steer_rate"].insert(0, "1")
+        self.entries["throt_rate"].insert(0, "0.5")
+        self.entries["a_max"].insert(0, "100")
+        self.data["ButtonLbl"] = tk.StringVar()
+        self.data["ButtonLbl"].set("Altitude")
+        self.data["TransitionMode"] = -1
+        button = tk.Button(input_frm, textvariable=  self.data["ButtonLbl"], command = self.Ascent_SwitchGT)
+        button.grid(row = 10, column = 1)
+        label = tk.Label(input_frm, textvariable = self.result, font= ("Arial Bold", 16))
+        label.grid(row = 15, column = 1)
+        TransLabel = tk.StringVar()
+        TransLabel.set("Grav. Transition [m]")
+        self.data["TransLabel"] = TransLabel
+        label = tk.Label(input_frm, textvariable = self.data["TransLabel"], font= ("Arial Bold", 16))
+        label.grid(row = 9, column = 0)
+        button = tk.Button(button_frm, text = "Add List of Thrusts", command = self.Ascent_AddThrust)
+        button.pack()
+        button = tk.Button(button_frm, text = "Add List of CDs", command = self.Ascent_AddCDs)
+        button.pack()
+        button = tk.Button(button_frm, text = "Add List of Areas", command = self.Ascent_AddAreas)
+        button.pack()
+        button = tk.Button(button_frm, text = "Add List of Mass Flows", command = self.Ascent_AddMassFlows)
+        button.pack()
+        button = tk.Button(button_frm, text = "Preview Ascent Profile", command = self.Ascent_Preview_profile)
+        button.pack()
+        button = tk.Button(button_frm, text = "Calculate", command = self.Ascent_Calc)
+        button.pack(side = tk.RIGHT)
+        button = tk.Button(button_frm, text = "Clear Inputs", command = self.clear)
+        button.pack(side = tk.LEFT)
+        self.run()
+    
+    def Ascent_Preview_profile(self):
+        C1 = self.entries["C1"].get()
+        C2 = self.entries["C2"].get()
+        Grav_Trans = self.entries["Grav_Trans"].get()
+        h_cutoff = self.entries["cutoff_h"].get()
+        if self.data["TransitionMode"] == 1:
+            self.ErrorMsg("Preview only available in Altitude Transition Mode")
+            return -1
+        if C1 == "" or C2 == "" or Grav_Trans == "":
+            self.ErrorMsg("Profile Preview requires C1, C2 and Transition Altitude")
+            return -1
+        C1 = float(C1)
+        C2 = int(C2) * 1000
+        Grav_Trans = int(Grav_Trans)
+        if h_cutoff != "":
+            h_cutoff = int(h_cutoff)
+        else:
+            h_cutoff = 200000
+        h, x = self.tools["calculator"].gen_ascent_path_preview(C1, C2, Grav_Trans, h_cutoff)
+        x = [val*1e-3 for val in x]
+        karman_line = [100000 for k in x]
+        self.tools["plotter"].plot2D(x, h, dataY_List = [karman_line], xlim = [-max(x)*0.1, max(x)], xLab = "Downrange [km]", yLab = "Altitude [m]", data_Labels = ["Ascent Profile" ,"Karman Line"]) 
+
+    def Ascent_SwitchGT(self):
+        self.data["TransitionMode"] *= -1
+        if self.data["TransitionMode"] == -1:
+            self.data["ButtonLbl"].set("Altitude")
+            self.data["TransLabel"].set("Grav. Transition [m]")
+        elif self.data["TransitionMode"] == 1:
+            self.data["ButtonLbl"].set("Velocity")
+            self.data["TransLabel"].set("Grav. Transition [m/s]")
+
+    def Ascent_AddThrust(self):
+        self.placeholder()
+    def Ascent_AddCDs(self):
+        self.placeholder()
+    def Ascent_AddAreas(self):
+        self.placeholder()
+    def Ascent_AddMassFlows(self):
+        self.placeholder()
+    def Ascent_Calc(self):
+        self.placeholder()
     
     def Tsiolkowsky(self):
         self.root.destroy()
@@ -216,7 +385,6 @@ class GUI():
             self.ErrorMsg("Number of Stages must be entered first")
             return -1
         self.ListInputWindow(Field_Name = "Fuel, Stage ", num_inputs = num_stages, key_Name = "fuels")
-
     
     def delV_AddStageMasses(self):
         try:
@@ -301,7 +469,6 @@ class GUI():
             self.ErrorMsg("Adding further ISPs is only possible if the Number of Stages is at least 2")
             return -1
         self.ListInputWindow(Field_Name= "Isp, Stage ", key_Name="Isps", num_inputs = num_stages-1, startoffset=2)
-
 
     def Point_Calc(self):
         n = self.entries["num Stages"].get()
@@ -397,7 +564,6 @@ class GUI():
         button.pack(side = tk.LEFT)
         self.run()
     
-
     def Range_FixMu(self):
         self.root.geometry("390x360")
         label = tk.Label(self.data["input Frame"], text = "Mu", font = ("Arial Bold", 16))
@@ -418,7 +584,6 @@ class GUI():
         entry.pack(side = tk.RIGHT)
         self.entries["Range Upper"] = entry
         self.data["Range Var"] = "Isp"
-
 
     def Range_FixIsp(self):
         self.root.geometry("390x360")
@@ -795,7 +960,6 @@ class GUI():
             _row += 1
         return entries
 
-
     def basicWindowSetup(self, parent = None, back_button = True, help_msg = "", help_button = True):
         if parent == None:
             parent = self.root
@@ -804,9 +968,9 @@ class GUI():
         input_frm.pack()
         button_frm = tk.Frame(parent)
         button_frm.pack()
-        path = os.path.join(self.FileDir, "back.png")
-        back = tk.PhotoImage(file = path)
         if back_button:
+            path = os.path.join(self.FileDir, "back.png")
+            back = tk.PhotoImage(file = path)
             button = tk.Button(input_frm, image = back, command = self.back, borderwidth=0)
             button.image = back
             button.config(height = 40, width = 50)
@@ -877,5 +1041,6 @@ class GUI():
 
     def placeholder(self):
         msg_box = mb.showerror(title="Error", message="Function not yet Implemented")
+    
     def run(self):
         self.root.mainloop()

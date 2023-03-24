@@ -207,7 +207,7 @@ class Plotter(object):
         #close all plots
         plt.close("all")
 
-    def plot2D(self, dataX, dataY,xLab = None, yLab = None, show = 1, savefile = 0, filename = None, dataY_List = None, data_Labels = None, data_dir = None):
+    def plot2D(self, dataX, dataY, xlim = None, ylim = None, xLab = None, yLab = None, show = 1, savefile = 0, filename = None, dataY_List = None, data_Labels = None, data_dir = None):
         """
         Function for creating 2D colourmap plot
         
@@ -216,6 +216,8 @@ class Plotter(object):
             dataY: Y-Axis
 
         Optional:
+            xlim: List of x limits [lower, upper]
+            ylim: List of y limits [lower, upper]
             dataY_List: List of Y datasets for comparative plotting
             show: Flag for displaying the plot
             savefile: Flag for saving the plot to file
@@ -244,9 +246,13 @@ class Plotter(object):
         ax.grid(True)
         if dataY_List != None:
             for i in range(0, len(dataY_List)):
-                data_Label = data_Labels[i]
-                ax.plot(dataX, dataY_List[i], linewidth=2.0)
+                data_Label = data_Labels[i+1]
+                ax.plot(dataX, dataY_List[i], linewidth=2.0, label = data_Label)
         if savefile:
+            if not xlim == None:
+                plt.xlim(xlim)
+            if not ylim == None:
+                plt.ylim(ylim)
             #Determine the Base directory
             if data_dir == None:
                 data_dir = self.DataDir
@@ -272,6 +278,10 @@ class Plotter(object):
                     i+=1
                 plt.savefig(filename)
         if show:
+            if not xlim == None:
+                plt.xlim(xlim)
+            if not ylim == None:
+                plt.ylim(ylim)
             #Show the Plot
             plt.legend()
             plt.show()
