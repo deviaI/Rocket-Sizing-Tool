@@ -6,10 +6,9 @@ Created on Thu Oct 20 10:25:30 2022
 """
 
 import math
-
 import numpy as np
-
-
+import utils.ThermalSizing as TS
+import utils.TM as TM
 class Calculator(object):
 
     def __init__(self):
@@ -899,6 +898,10 @@ class Calculator(object):
         B = -2*np.log10((ks/d)/3.7 + 2.51*A/Re)
         C = -2*np.log10((ks/d)/3.7 + 2.51*B/Re)
         return (A-(B-A)**2/(C-2*B+A))**-2
+    def CoolingCalc(self):
+        TS
+    def TMCalc(self, p_pb, of_pb, TET, cp, gamma):
+        TM.run(p_pb, of_pb, TET, cp, gamma)
 
     #//////////////////////////////////////
     #//////////////////////////////////////

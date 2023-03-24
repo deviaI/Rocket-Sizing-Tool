@@ -2,7 +2,7 @@ import numpy as np
 import CoolProp.CoolProp as CP
 import csv
 import scipy
-
+import os.path
 inc_len = 0.001 #increment inc_length [m]
 wt = 0.002 #wall thickness copper liner [m]
 depth = 0.001 #depth of a chooling channel [m]
@@ -33,8 +33,8 @@ v_hg = [] #local hot gas velocity [m/s]
 dA = [] #local nozzel area between two x increments [m^2]
 l = [] #arcinc_length of nozzle surface [m]
 token = 1
-
-with open("D://Windows Defaults//Docs//Python Scripts//RST//Rocket-Sizing-Tool//utils//files//flow_data.csv") as file:
+base = os.path.dirname(__file__)
+with open(os.path.join(base, "Files", "flow_data.csv")) as file:
     csvreader = csv.reader(file)
 
     for row in csvreader:
