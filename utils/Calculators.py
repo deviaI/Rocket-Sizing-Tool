@@ -170,7 +170,7 @@ class Calculator(object):
         for i in range(0,n):
             try:
                 max_dv += self.Tsiolkowsky(isp[i], 1, mu)
-            except TypeError:
+            except:
                 max_dv += self.Tsiolkowsky(isp, 1, mu)
         if max_dv <= delv:
             raise Exception("Target Delta V unachievable")

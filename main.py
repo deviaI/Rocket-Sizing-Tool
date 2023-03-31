@@ -53,6 +53,10 @@ def main():
 
         """
         ARCHIVED CALCULATIONS
+        rez = Calc.calcRange(1, "Mu", 400, 200, [0.03,0.07], 9300)
+        m = rez[0]
+        isp = rez[1]
+        Plt.plot2D(isp, m, xLab = "Mu [-]", yLab = "Mass [kg]")
                 #DVs: 
         #SL2: 13.28
         #GTO: 11.8
