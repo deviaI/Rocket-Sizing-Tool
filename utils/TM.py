@@ -2,7 +2,7 @@
 '''
 # -*- coding: utf-8 -*-
 Created on  2022/10/26 09:23:69
-@author  Devial
+@author  Jessica Hauschulz
 '''
 
 
@@ -87,7 +87,7 @@ def run(p_pb, of_pb, TET, cp, gamma):
     H_p_p3 = delta_p_p_p3/(g*roh_p3) #[m] pump head rise
     NPSH_p3 = (p_i_p3-p_v_p3)/(g*roh_p3) #[m] net positive suction head
     n_p3 = math.ceil(delta_p_p_p3/delta_p_ps) # number of stages 
-    N_r_p3 = (N_s*(H_p_p3/n_p3)**0.75 / math.sqrt(Q_p3)) # [rad/s] pump rotational speed
+    N_r_p3 = ((90*NPSH_p3)**0.75 )/math.sqrt(Q_p3)  # [rad/s] pump rotational speed
     N_p3 =  (30.0*N_r_p3)/math.pi #[RPM] pump rotational speed
     u_t_p3 = math.sqrt((g*H_p_p3)/(n_p3*psi)) #[m/s] pump impeller tip speed
     D_2t_p3 = (2*u_t_p3)/N_r_p3 #[m] pum impeller exit tip diameter
